@@ -1,0 +1,9 @@
+#include <stdio.h>
+
+void main()
+{
+	*FILE  fp;
+	fp = fopen("text", "w");
+	printf("aaa\n");
+	fprintf(fp,"aaaaaa\n");
+}

@@ -1,0 +1,135 @@
+./hmtest: main thread id = 3075598080
+t[1][2]=1  
+t[2][1]=1  
+main: waiting for the exit of sub threads
+ht_qrv_thread: msg receiving thread id = 3067202368
+ht_rmsg_proc: rqs[0] = 163845
+ht_rmsg_proc: package.type = 0xff
+ht_rmsg_proc: package.type = 7
+ht_rmsg_proc: package.type = 0xff
+ht_rmsg_proc: msg->mtype = 5
+timer_thread: rqs[1] = -1
+timer_thread: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+ht_rmsg_proc: package.type = 0xff *****************************************
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+ht_rmsg_proc: package.type = 0xff*********************************************8
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+timer_proc: BS[0] = 1
+timer_proc: rqs[1] = -1
+timer_proc: can not get the qid of rx node 2
+t
