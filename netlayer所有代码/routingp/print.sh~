@@ -1,0 +1,21 @@
+#!/bin/bash
+
+#set -e : exit when error
+set -e
+routingp_pid=`ps  | awk '/routingp/{print $1}'`
+
+#调用参数
+#option="${1}"
+#option=${1}
+option=$1
+echo $opotion $option
+echo $#
+echo $0
+echo $$
+if [ ! $routingp_pid ];then
+  echo "routingp failed to run"
+  exit
+else
+  echo $routingp_pid
+  kill -USR1 $routingp_pid
+fi
