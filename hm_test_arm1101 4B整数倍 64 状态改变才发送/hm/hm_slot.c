@@ -3348,7 +3348,7 @@ void *hm_bs_life_thread(void *i_p)
 #endif
 
 	struct timeval tv;
-	tv.tv_sec = 2;      /* 有待调整 */ 
+	tv.tv_sec = 4;      /* 有待调整 */ 
 	tv.tv_usec = 200000;
     select(0,NULL,NULL,NULL,&tv);
 
