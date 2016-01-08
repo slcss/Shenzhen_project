@@ -279,7 +279,7 @@ void *hm_slot_thread(void *arg)
 					service_frame.lcclock_lv = neighbor_map[netnum]->lcclock_lv;
 					service_frame.l_BS = neighbor_map[netnum]->l_BS;
 					
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+					for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						if(bs_num == neighbor_map[netnum]->BS_num)
 						{
@@ -386,7 +386,7 @@ void *hm_slot_thread(void *arg)
 
 					/*********** 选择上级节点/二维修改 11.07 ***********/
 					level = 32;				
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+					for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						if(bs_num == neighbor_map[net_i]->BS_num)
 						{
@@ -460,7 +460,7 @@ void *hm_slot_thread(void *arg)
 					service_frame.lcclock_lv = neighbor_map[net_i]->lcclock_lv;
 					service_frame.l_BS = neighbor_map[net_i]->l_BS;
 
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+					for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						if(bs_num == neighbor_map[net_i]->BS_num)
 						{
@@ -576,7 +576,7 @@ void *hm_slot_thread(void *arg)
 
 					/*********** 选择上级节点 ***********/
 					level = 32;				
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+					for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						if(bs_num == neighbor_map[net_i]->BS_num)
 						{
@@ -650,7 +650,7 @@ void *hm_slot_thread(void *arg)
 					service_frame.lcclock_lv = neighbor_map[net_i]->lcclock_lv;
 					service_frame.l_BS = neighbor_map[net_i]->l_BS;
 
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+					for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						if(bs_num == neighbor_map[net_i]->BS_num)
 						{
@@ -1046,7 +1046,7 @@ void *hm_slot_thread(void *arg)
 					service_frame.lcclock_lv = neighbor_map[net_i]->lcclock_lv;
 					service_frame.l_BS = neighbor_map[net_i]->l_BS;			
 
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+					for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						if(bs_num == neighbor_map[net_i]->BS_num)
 						{
@@ -1178,7 +1178,7 @@ void *hm_slot_thread(void *arg)
 					/*********** 选择上级节点 ***********/
 					/* 这里可以考虑排除上一次选定的上级节点，因为上一次的上级节点并不稳定 */
 					level = 32;				
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+					for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						if(bs_num == neighbor_map[net_i]->BS_num)
 						{
@@ -1252,7 +1252,7 @@ void *hm_slot_thread(void *arg)
 					service_frame.lcclock_lv = neighbor_map[net_i]->lcclock_lv;
 					service_frame.l_BS = neighbor_map[net_i]->l_BS;
 
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+					for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						if(bs_num == neighbor_map[net_i]->BS_num)
 						{
@@ -1428,7 +1428,7 @@ void *hm_slot_thread(void *arg)
 					service_frame.lcclock_lv = neighbor_map[net_i]->lcclock_lv;
 					service_frame.l_BS = neighbor_map[net_i]->l_BS;
 				
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+				for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						if(bs_num == neighbor_map[net_i]->BS_num)
 						{
@@ -3528,7 +3528,7 @@ void *hm_sf_ls_send_thread(void *arg)
 		service_frame.l_BS = neighbor_map[net_i]->l_BS;
 
 		/* 可以再次优化，利用BS_num 11.06/再次优化 11.07 */
-		for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+		for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 		{
 			if(bs_num == neighbor_map[net_i]->BS_num)
 			{

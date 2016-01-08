@@ -2,7 +2,7 @@ CC = arm-linux-gcc-4.4.3
 OBJECTS = hm_main.o ../mr_common.o hm_timer.o hm_queue_manage.o hm_slot.o hm_with_lowmac.o
 
 highmac: $(OBJECTS)
-	$(CC) -o  highmac $(OBJECTS) -lpthread
+	$(CC) -o  highmacp64_cs $(OBJECTS) -lpthread
 
 hm_main.o: hm_main.c hm_common.h
 	$(CC) -g -c hm_main.c
