@@ -1390,7 +1390,7 @@ void *hm_slot_thread(void *arg)
 					}
 
 					/* 查看是否满足条件，如果满足则关闭定时器，退出循环 */
-					if(neighbor_map[net_i]->netID != neighbor_map[net_i]->localID && neighbor_map_manage[net_i]->sf_rf_num > 0)
+					if(neighbor_map[net_i]->netID != neighbor_map[net_i]->localID && neighbor_map_manage[net_i]->sf_rf_num > 1)
 					{
 						new_value.it_value.tv_sec = 0;
                         new_value.it_value.tv_usec = 0;
@@ -1818,7 +1818,7 @@ void *hm_slot_thread(void *arg)
 					break;
             	}
 
-				if(neighbor_map[net_i]->netID != neighbor_map[net_i]->localID && neighbor_map_manage[net_i]->sf_rf_num > 0)    /* 满足CON3_6 */
+				if(neighbor_map[net_i]->netID != neighbor_map[net_i]->localID && neighbor_map_manage[net_i]->sf_rf_num > 1)    /* 满足CON3_6 */
 				{
 					EPT(stderr, "3_6\n");
                 	/*********** 状态改变 ***********/
@@ -2940,14 +2940,9 @@ U8 hm_MAC_frame_rcv_proc3(lm_packet_t *cache_p, U8 net_i, U8 *sf_count)
 				neighbor_map_manage[net_id]->sf_samenet_get = 1;
 
 				if(service_frame_p->localID == neighbor_map_p->referenceID)    /* 表明收到上级节点勤务帧 */
-				{
-					if(neighbor_map_manage[net_id]->sf_rf_num == 0)      /* 记录收到上级节点勤务帧的次数 */
-						neighbor_map_manage[net_id]->sf_rf_num++;
-					else
-					{
-						if(neighbor_map_manage[net_id]->sf_rf_num == 1)
-							neighbor_map_manage[net_id]->sf_rf_num++;
-					}
+				{					     
+						neighbor_map_manage[net_id]->sf_rf_num++;  /* 记录收到上级节点勤务帧的次数/修改为大于1 1.10 */
+					
 
 					/* 开始对勤务帧中每一个表项轮询 */
 					for(i=0; i<service_frame_p->num; i++)

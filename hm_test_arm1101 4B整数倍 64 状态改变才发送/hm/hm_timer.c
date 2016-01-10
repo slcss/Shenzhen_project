@@ -64,8 +64,9 @@ int hm_start_timer1()
 
     //new_value.it_value.tv_sec = 0;
     //new_value.it_value.tv_usec = 600000;
-	new_value.it_value.tv_sec = 6*2;
-    new_value.it_value.tv_usec = 500000*2;
+	new_value.it_value.tv_sec = 6*2+1;
+    //new_value.it_value.tv_usec = 500000*2;
+	new_value.it_value.tv_usec = 0;
     new_value.it_interval.tv_sec = 0;
     new_value.it_interval.tv_usec = 0;
 
@@ -116,8 +117,9 @@ int hm_start_timer3()
 
     //new_value.it_value.tv_sec = 0;
     //new_value.it_value.tv_usec = 600000;
-    new_value.it_value.tv_sec = 6*2;
-    new_value.it_value.tv_usec = 500000*2;
+    new_value.it_value.tv_sec = 6*2+1;
+    //new_value.it_value.tv_usec = 500000*2;
+    new_value.it_value.tv_usec = 0;
     new_value.it_interval.tv_sec = 0;
     new_value.it_interval.tv_usec = 0;
 
