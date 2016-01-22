@@ -665,10 +665,10 @@ void* hm_lm2nl_thread(void *arg)
 								EPT(stderr, "hm_lm2nl_thread: Route data\n");							
 																
 								memcpy(temp_data, package->data, 8);
-								temp_len = *(package->data+8);
-								memcpy(temp_data+8, package->data+9, temp_len);
+								temp_len = *(U16 *)(package->data+8);
+								memcpy(temp_data+8, package->data+10, temp_len);
 								
-								rval = hm_smsg_proc(&tx_msg, MMSG_MP_DATA, ((mac_packet_t *)package->data)->src, temp_len+8, temp_data);  /* package.len-4 为data的真实长度 */
+								rval = hm_smsg_proc(&tx_msg, MMSG_MP_DATA, ((mac_packet_t *)package->data)->src, temp_len+8, temp_data);  /* package.len-4 为data的真实长度加填充的长度，temp_len才是真实长度 1.21 */
 								if(rval != 0)
 									goto thread_return;								
 								break;
@@ -677,8 +677,8 @@ void* hm_lm2nl_thread(void *arg)
 								EPT(stderr, "hm_lm2nl_thread: Business1 data\n");
 								
 								memcpy(temp_data, package->data, 8);
-								temp_len = *(package->data+8);
-								memcpy(temp_data+8, package->data+9, temp_len);
+								temp_len = *(U16 *)(package->data+8);
+								memcpy(temp_data+8, package->data+10, temp_len);
 									
 								rval = hm_smsg_proc(&tx_msg, MMSG_MP_DATA, ((mac_packet_t *)package->data)->src, temp_len+8, temp_data);
 								if(rval != 0)
@@ -689,8 +689,8 @@ void* hm_lm2nl_thread(void *arg)
 								EPT(stderr, "hm_lm2nl_thread: Business2 data\n");								
 								
 								memcpy(temp_data, package->data, 8);
-								temp_len = *(package->data+8);
-								memcpy(temp_data+8, package->data+9, temp_len);
+								temp_len = *(U16 *)(package->data+8);
+								memcpy(temp_data+8, package->data+10, temp_len);
 								
 								rval = hm_smsg_proc(&tx_msg, MMSG_MP_DATA, ((mac_packet_t *)package->data)->src, temp_len+8, temp_data);
 								if(rval != 0)
@@ -701,8 +701,8 @@ void* hm_lm2nl_thread(void *arg)
 								EPT(stderr, "hm_lm2nl_thread: Business3 data\n");
 								
 								memcpy(temp_data, package->data, 8);
-								temp_len = *(package->data+8);
-								memcpy(temp_data+8, package->data+9, temp_len);
+								temp_len = *(U16 *)(package->data+8);
+								memcpy(temp_data+8, package->data+10, temp_len);
 								
 								rval = hm_smsg_proc(&tx_msg, MMSG_MP_DATA, ((mac_packet_t *)package->data)->src, temp_len+8, temp_data);
 								if(rval != 0)
@@ -713,8 +713,8 @@ void* hm_lm2nl_thread(void *arg)
 								EPT(stderr, "hm_lm2nl_thread: Business4 data\n");
 								
 								memcpy(temp_data, package->data, 8);
-								temp_len = *(package->data+8);
-								memcpy(temp_data+8, package->data+9, temp_len);
+								temp_len = *(U16 *)(package->data+8);
+								memcpy(temp_data+8, package->data+10, temp_len);
 								
 								rval = hm_smsg_proc(&tx_msg, MMSG_MP_DATA, ((mac_packet_t *)package->data)->src, temp_len+8, temp_data);
 								if(rval != 0)
@@ -1274,6 +1274,7 @@ int hm_rmsg_proc(U16 len, void * data)
 	/* 在MAC帧头后加一字节用来表示有效数据长度 12.18 */
 	U8 temp[2048] = {0};  /* temp数组用来存储修改后的数据结构 */
 	U16 temp_len = 0;
+	U16 MACdata_len = 0;
 
 	//EPT(stderr, "hm_rmsg_proc: highmac receive a msg from netlayer, no=%ld\n", rmsg->mtype);
 
@@ -1281,13 +1282,20 @@ int hm_rmsg_proc(U16 len, void * data)
 	{
 		case MMSG_IP_DATA:    /* 业务数据   0x01 02 03 */		
 			EPT(stderr, "hm_rmsg_proc: 11111\n");
+
+			/* 将网络层发来的MAC帧数据填充到temp数组中 1.21 */
 			memcpy(temp, rmsg->data, 8);
-			temp[8] = len - 9;
-			memcpy(temp+9, rmsg->data+8, len - 9);
-			if(len%4 != 0)			
-				temp_len = 4-len%4+len;			
+			
+			MACdata_len = len - 9;
+			memcpy(temp+8, &MACdata_len, 2);			
+			
+			memcpy(temp+10, rmsg->data+8, len - 9);
+
+			/* temp数组的长度在填充前为len+1，填充后为temp_len 1.21 */
+			if((len+1)%4 != 0)			
+				temp_len = 4-(len+1)%4+(len+1);			
 			else
-				temp_len = len;		
+				temp_len = len+1;		
 			EPT(stderr, "hm_rmsg_proc: temp_len = %d\n", temp_len);
 			
 			hm_rmsg_ip_proc(temp_len, temp);    
@@ -1300,30 +1308,44 @@ int hm_rmsg_proc(U16 len, void * data)
 
 		case MMSG_RPM:    /* 路由协议数据  0x00 */
 			EPT(stderr, "hm_rmsg_proc: 33333\n");
+
+			/* 将网络层发来的MAC帧数据填充到temp数组中 1.21 */
 			memcpy(temp, rmsg->data, 8);
-			temp[8] = len - 9;
-			memcpy(temp+9, rmsg->data+8, len - 9);
-			if(len%4 != 0)			
-				temp_len = 4-len%4+len;			
+			
+			MACdata_len = len - 9;
+			memcpy(temp+8, &MACdata_len, 2);			
+			
+			memcpy(temp+10, rmsg->data+8, len - 9);
+
+			/* temp数组的长度在填充前为len+1，填充后为temp_len 1.21 */
+			if((len+1)%4 != 0)			
+				temp_len = 4-(len+1)%4+(len+1);			
 			else
-				temp_len = len;
+				temp_len = len+1;		
 			EPT(stderr, "hm_rmsg_proc: temp_len = %d\n", temp_len);
 			
-			hm_rmsg_rp_proc(len-1, rmsg->data);    
+			hm_rmsg_rp_proc(temp_len, temp);    
 			break;
 
 		case MMSG_MAODV:    /* 组播路由协议数据  0x00 */
 			EPT(stderr, "hm_rmsg_proc: 44444\n");
+
+			/* 将网络层发来的MAC帧数据填充到temp数组中 1.21 */
 			memcpy(temp, rmsg->data, 8);
-			temp[8] = len - 9;
-			memcpy(temp+9, rmsg->data+8, len - 9);
-			if(len%4 != 0)			
-				temp_len = 4-len%4+len;			
+			
+			MACdata_len = len - 9;
+			memcpy(temp+8, &MACdata_len, 2);			
+			
+			memcpy(temp+10, rmsg->data+8, len - 9);
+
+			/* temp数组的长度在填充前为len+1，填充后为temp_len 1.21 */
+			if((len+1)%4 != 0)			
+				temp_len = 4-(len+1)%4+(len+1);			
 			else
-				temp_len = len;
+				temp_len = len+1;		
 			EPT(stderr, "hm_rmsg_proc: temp_len = %d\n", temp_len);
 			
-			hm_rmsg_rp_proc(len-1, rmsg->data);    
+			hm_rmsg_rp_proc(temp_len, temp);    
 			break;
 
 		default:
