@@ -3,7 +3,7 @@
 
 #include "nl_common.h"
 
-#define MAX_PACKAGE_DATA_LENGTH		496
+#define MAX_PACKAGE_DATA_LENGTH		494
 
 
 #pragma pack(1)

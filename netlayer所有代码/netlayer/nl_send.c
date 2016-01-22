@@ -196,7 +196,7 @@ int nl_send_to_himac(mmsg_t *msg,int len)
 		memcpy(pkt->data + sizeof(mmhd_t), ptr, n);
 		ptr += n;
 		left -= n;
-        printf("pkt data : %s\n",pkt->data + sizeof(mmhd_t));
+        //printf("pkt data : %s\n",pkt->data + sizeof(mmhd_t));
 		int size_for_snd = sizeof(MADR) + sizeof(mmhd_t)  + 8 + n;
 		while(msgsnd(hm_qid, snd_buf, size_for_snd, 0) < 0)
 		{

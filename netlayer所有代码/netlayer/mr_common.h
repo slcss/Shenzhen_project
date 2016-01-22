@@ -175,7 +175,7 @@ typedef struct _tsche_t {
 //	tproc_t	procs[2];		/* for test */
 } tsche_t;
 
-#define MAX_DATA_LENGTH		1024
+#define MAX_DATA_LENGTH		2048
 typedef struct _mmsg_t {
 	long  mtype;
 	MADR  node;				/* differnet meaning dependent on mtype */
