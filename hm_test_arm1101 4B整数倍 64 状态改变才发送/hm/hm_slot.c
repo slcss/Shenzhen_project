@@ -178,6 +178,7 @@ void *hm_slot_thread(void *arg)
 					if(timer_flag == 1)    /* 如果是定时器到来的话直接退出 */
 					{
 						timer_flag = 0;
+						//EPT(stderr, "hm_slot_thread: timer1 up\n");
 						break;
 					}
 
@@ -192,6 +193,7 @@ void *hm_slot_thread(void *arg)
 					if(slot_cache1_flag == 1)
 					{
 						hm_MAC_frame_rcv_proc1(&slot_cache1, &sf_count);
+						//EPT(stderr, "hm_slot_thread: 111\n");
 
 						slot_cache1_flag = 0;
 					}
@@ -199,42 +201,46 @@ void *hm_slot_thread(void *arg)
 					if(slot_cache2_flag == 1)
 					{
 						hm_MAC_frame_rcv_proc1(&slot_cache2, &sf_count);
+						//EPT(stderr, "hm_slot_thread: 222\n");
 
 						slot_cache2_flag = 0;
 					}
 
-					/* 查看是否满足条件，如果满足则关闭定时器，退出循环 */
-					for(i=0; i<netnum; i++)
+					/* 只有当收到了勤务帧才做如下判断 1.23 */
+					if(sf_count != 0)
 					{
-						if(neighbor_map_manage[i]->sf_flag == 1)
+						/* 查看是否满足条件，如果满足则关闭定时器，退出循环 */
+						for(i=0; i<netnum; i++)
 						{
-							net_num++;    /* 记录满足条件(收到同一个NET节点两次勤务帧)的网络个数 */
+							if(neighbor_map_manage[i]->sf_flag == 1)
+							{
+								net_num++;    /* 记录满足条件(收到同一个NET节点两次勤务帧)的网络个数 */
+							}
 						}
-					}
+						//EPT(stderr, "hm_slot_thread: net_num = %d\n", net_num);
+						//EPT(stderr, "hm_slot_thread: j = %d\n", j);
+						//EPT(stderr, "hm_slot_thread: netnum = %d\n", netnum);
+						
+						if(net_num == netnum)
+						{
+	                         /* 全置0 */
+							new_value.it_value.tv_sec = 0;
+	                        new_value.it_value.tv_usec = 0;
+	                        new_value.it_interval.tv_sec = 0;
+	                        new_value.it_interval.tv_usec = 0;
 
-					//EPT(stderr, "hm_slot_thread: j = %d\n", j);
-					//EPT(stderr, "hm_slot_thread: netnum = %d\n", netnum);
-					
-					if(net_num == netnum)
-					{
-                         /* 全置0 */
-						new_value.it_value.tv_sec = 0;
-                        new_value.it_value.tv_usec = 0;
-                        new_value.it_interval.tv_sec = 0;
-                        new_value.it_interval.tv_usec = 0;
-
-						rval = setitimer(ITIMER_REAL, &new_value, NULL);   /* 停止定时器 */
-						if (-1 == rval)
-						{/* failure */
-							EPT(stderr, "error occurs in setting timer1 %d[%s]\n", errno, strerror(errno));
-							exit(1);
+							rval = setitimer(ITIMER_REAL, &new_value, NULL);   /* 停止定时器 */
+							if (-1 == rval)
+							{/* failure */
+								EPT(stderr, "error occurs in setting timer1 %d[%s]\n", errno, strerror(errno));
+								exit(1);
+							}							 
+							break;
 						}
-
-						break;
+						/*10.9 清0，防止重复计数*/
+						else
+							net_num = 0;
 					}
-					/*10.9 清0，防止重复计数*/
-					else
-						net_num = 0;
 				}
 
 				if(sf_count == 0)          /* 满足CON1_1   默认net_num为0 */
@@ -2458,6 +2464,7 @@ void hm_MAC_frame_rcv_proc1(lm_packet_t *cache_p, U8 *sf_count)
 		case LH_FF_DATA:    /* 收到的是LowMAC反馈帧 */
 			//printf("L2H_MAC_frame_p->localID = %d  lcclock_lv = %d  referenceID = %d  rfclock_lv = %d  state = %d  build = %d  res1 = %d\n", L2H_MAC_frame_p->localID, 
 			//	L2H_MAC_frame_p->lcclock_lv, L2H_MAC_frame_p->referenceID, L2H_MAC_frame_p->rfclock_lv, L2H_MAC_frame_p->state, L2H_MAC_frame_p->build, L2H_MAC_frame_p->res1);
+			EPT(stderr, "hm_MAC_frame_rcv_proc1: LH_FF_DATA\n");
 			break;
 
 		case 2:    /* 收到的是时隙预约请求帧 */
