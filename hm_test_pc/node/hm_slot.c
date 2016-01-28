@@ -78,11 +78,12 @@ extern FILE *fp;
 void *hm_slot_thread(void *arg)
 {
 	U8  sf_count = 0;          /* 记录勤务帧个数 */
-	U8  i,j;
+	U8  i,j,bs;
 	U8  net_num = 0;           /* 记录满足条件(收到同一个NET节点两次勤务帧)的网络个数 */
 	U8  net_i = 0;             /* 记录入网选定哪一个网络 */
 	U8  bs_i = 0;              /* 记录选定的基准节点的时隙 */
 	U8  node_i = 0;            /* 记录选定的节点号 */
+	U8  net_count = 0;		   /* 清空所有时隙表及时隙管理表时对网络的计数 1.13 */
 
 	/* 暂存量 */
 	U8  num = 0;
@@ -173,6 +174,7 @@ void *hm_slot_thread(void *arg)
 
 					if(timer_flag == 1)    /* 如果是定时器到来的话直接退出 */
 					{
+						EPT(stderr, "hm_slot_thread: timer1 up\n");
 						timer_flag = 0;
 						break;
 					}
@@ -275,7 +277,7 @@ void *hm_slot_thread(void *arg)
 					service_frame.lcclock_lv = neighbor_map[netnum]->lcclock_lv;
 					service_frame.l_BS = neighbor_map[netnum]->l_BS;
 					
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+					for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						if(bs_num == neighbor_map[netnum]->BS_num)
 						{
@@ -381,7 +383,7 @@ void *hm_slot_thread(void *arg)
 
 					/*********** 选择上级节点/二维修改 11.07 ***********/
 					level = 32;				
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+					for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						//EPT(stderr, "bs_num1 = %d\n", bs_num);
 						if(bs_num == neighbor_map[net_i]->BS_num)
@@ -457,7 +459,7 @@ void *hm_slot_thread(void *arg)
 					service_frame.lcclock_lv = neighbor_map[net_i]->lcclock_lv;
 					service_frame.l_BS = neighbor_map[net_i]->l_BS;
 
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+					for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						if(bs_num == neighbor_map[net_i]->BS_num)
 						{
@@ -572,7 +574,7 @@ void *hm_slot_thread(void *arg)
 
 					/*********** 选择上级节点 ***********/
 					level = 32;				
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+					for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						if(bs_num == neighbor_map[net_i]->BS_num)
 						{
@@ -646,7 +648,7 @@ void *hm_slot_thread(void *arg)
 					service_frame.lcclock_lv = neighbor_map[net_i]->lcclock_lv;
 					service_frame.l_BS = neighbor_map[net_i]->l_BS;
 
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+					for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						if(bs_num == neighbor_map[net_i]->BS_num)
 						{
@@ -743,62 +745,73 @@ void *hm_slot_thread(void *arg)
 				{
 					EPT(stderr, "1_4\n");
 					/*********** 清空操作 ***********/
-					for(i=0; i<netnum; i++)
+					/* 写锁 */
+					pthread_rwlock_wrlock(&rw_lock);
+					
+					net_count = 0;
+					for(i=0; i<MAX_NET_NUM; i++)
 					{
-						/* 写锁 */
-						pthread_rwlock_wrlock(&rw_lock);
-
-						U8 bs;
-						for(bs=0; bs<MAX_CFS_PSF; bs++)  /* 0~31时隙轮询 */
-						{
-							if(bs_num == neighbor_map[i]->BS_num)
+						//U8 bs;
+						if(netID[i] != 0)
+						{	
+							for(bs=0; bs<MAX_CFS_PSF + 1; bs++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 							{
-								bs_num = 0;  /* 保证后续使用的正确性 */
-								break;
-							}
-							if(neighbor_map[i]->BS[bs][0].BS_ID != 0)
-							{
-								bs_num++;
-								node_num = 0;
-								for(j = 1; j <= MAX_NODE_CNT; j++)	/* 1~32节点轮询 */
+								if(bs_num == neighbor_map[i]->BS_num)
 								{
-									if(neighbor_map[i]->BS[bs][j].BS_flag)   /* 此时还没选定本节点时隙，BS_flag等于1则life也一定等于1，10.30*/
-									{
-										node_num++;
-										/* 清空时隙生存期维护线程 10.30*/
-										rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
-										if(rval != 0)						
-											EPT(stderr, "CON1_4: pthread_cancel error code1 %d\n", rval);
-										rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
-										if(rval != 0)						
-											EPT(stderr, "CON1_4: pthread_join error code1 %d\n", rval);							
-										
-										rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
-										if(rval != 0)						
-											EPT(stderr, "CON1_4: pthread_cancel error code2 %d\n", rval);
-										rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
-										if(rval != 0)						
-											EPT(stderr, "CON1_4: pthread_join error code2 %d\n", rval);	
-										
-										sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
-									}
-									if(node_num == neighbor_map[i]->BS[bs][0].BS_ID)  /* 查看是否等于占用此时隙的节点总数 */
-										break;
+									bs_num = 0;  /* 保证后续使用的正确性 */
+									break;
 								}
-							}							
-						}
-						free(neighbor_map[i]);
-						neighbor_map[i] = NULL;
-						free(neighbor_map_manage[i]);
-						neighbor_map_manage[i] = NULL;
-
-						/* 解锁 */
-						pthread_rwlock_unlock(&rw_lock);
-					}
+								if(neighbor_map[i]->BS[bs][0].BS_ID != 0)
+								{
+									bs_num++;
+									node_num = 0;
+									for(j = 1; j <= MAX_NODE_CNT; j++)	/* 1~32节点轮询 */
+									{
+										if(neighbor_map[i]->BS[bs][j].BS_flag)   
+										{
+											node_num++;
+											if(neighbor_map[i]->BS[bs][j].life)
+											{
+												/* 清空时隙生存期维护线程 10.30*/
+												rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_cancel error code1 %d\n", rval);
+												rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_join error code1 %d\n", rval);							
+												
+												rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_cancel error code2 %d\n", rval);
+												rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_join error code2 %d\n", rval);	
+												
+												sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
+											}
+										}
+										if(node_num == neighbor_map[i]->BS[bs][0].BS_ID)  /* 查看是否等于占用此时隙的节点总数 */
+											break;
+									}
+								}	
+							}
+							free(neighbor_map[i]);
+							neighbor_map[i] = NULL;
+							free(neighbor_map_manage[i]);
+							neighbor_map_manage[i] = NULL;
+							
+							net_count++;
+							if(net_count == netnum)
+								break;								
+						}							
+					}						
 					memset(netID, 0, sizeof(netID));
 					netnum = 0;
 					net_num = 0;
 					sf_count = 0;
+					
+					/* 解锁 */
+					pthread_rwlock_unlock(&rw_lock);					
 
 					/*********** 状态改变 ***********/
 					nxt_state = SCN;
@@ -893,64 +906,71 @@ void *hm_slot_thread(void *arg)
 				{
 					EPT(stderr, "2_1\n");
 					/*********** 清空操作 ***********/
-					for(i=0; i<netnum; i++)
+					/* 写锁 */
+					pthread_rwlock_wrlock(&rw_lock);
+					
+					net_count = 0;
+					for(i=0; i<MAX_NET_NUM; i++)
 					{
-						/* 写锁 */
-						pthread_rwlock_wrlock(&rw_lock);
-
-						U8 bs;
-						for(bs=0; bs<MAX_CFS_PSF; bs++)
-						{
-							if(bs_num == neighbor_map[i]->BS_num)
+						//U8 bs;
+						if(netID[i] != 0)
+						{	
+							for(bs=0; bs<MAX_CFS_PSF + 1; bs++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 							{
-								bs_num = 0;  /* 保证后续使用的正确性 */
-								break;
-							}
-							if(neighbor_map[i]->BS[bs][0].BS_ID != 0)
-							{
-								bs_num++;
-								node_num = 0;
-								for(j = 1; j <= MAX_NODE_CNT; j++)	/* 1~32节点轮询 */
+								if(bs_num == neighbor_map[i]->BS_num)
 								{
-									if(neighbor_map[i]->BS[bs][j].BS_flag)   
-									{
-										node_num++;
-										if(neighbor_map[i]->BS[bs][j].life)
-										{
-											/* 清空时隙生存期维护线程 10.30*/
-											rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
-											if(rval != 0)						
-												EPT(stderr, "CON2_1: pthread_cancel error code1 %d\n", rval);
-											rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
-											if(rval != 0)						
-												EPT(stderr, "CON2_1: pthread_join error code1 %d\n", rval);							
-											
-											rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
-											if(rval != 0)						
-												EPT(stderr, "CON2_1: pthread_cancel error code2 %d\n", rval);
-											rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
-											if(rval != 0)						
-												EPT(stderr, "CON2_1: pthread_join error code2 %d\n", rval);	
-											
-											sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
-										}
-									}
-									if(node_num == neighbor_map[i]->BS[bs][0].BS_ID)  /* 查看是否等于占用此时隙的节点总数 */
-										break;
+									bs_num = 0;  /* 保证后续使用的正确性 */
+									break;
 								}
-							}	
-						}
-
-						free(neighbor_map[i]);
-						neighbor_map[i] = NULL;
-						free(neighbor_map_manage[i]);
-						neighbor_map_manage[i] = NULL;
-
-						/* 解锁 */
-						pthread_rwlock_unlock(&rw_lock);
-					}
+								if(neighbor_map[i]->BS[bs][0].BS_ID != 0)
+								{
+									bs_num++;
+									node_num = 0;
+									for(j = 1; j <= MAX_NODE_CNT; j++)	/* 1~32节点轮询 */
+									{
+										if(neighbor_map[i]->BS[bs][j].BS_flag)   
+										{
+											node_num++;
+											if(neighbor_map[i]->BS[bs][j].life)
+											{
+												/* 清空时隙生存期维护线程 10.30*/
+												rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_cancel error code1 %d\n", rval);
+												rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_join error code1 %d\n", rval);							
+												
+												rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_cancel error code2 %d\n", rval);
+												rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_join error code2 %d\n", rval);	
+												
+												sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
+											}
+										}
+										if(node_num == neighbor_map[i]->BS[bs][0].BS_ID)  /* 查看是否等于占用此时隙的节点总数 */
+											break;
+									}
+								}	
+							}
+							free(neighbor_map[i]);
+							neighbor_map[i] = NULL;
+							free(neighbor_map_manage[i]);
+							neighbor_map_manage[i] = NULL;
+							
+							net_count++;
+							if(net_count == netnum)
+								break;								
+						}							
+					}						
 					memset(netID, 0, sizeof(netID));
-					netnum = 0;
+					netnum = 0;					
+					
+					/* 解锁 */
+					pthread_rwlock_unlock(&rw_lock);					
 
 					/*********** 状态改变 ***********/
 					nxt_state = SCN;
@@ -1036,7 +1056,7 @@ void *hm_slot_thread(void *arg)
 					service_frame.lcclock_lv = neighbor_map[net_i]->lcclock_lv;
 					service_frame.l_BS = neighbor_map[net_i]->l_BS;			
 
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+					for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						if(bs_num == neighbor_map[net_i]->BS_num)
 						{
@@ -1167,7 +1187,7 @@ void *hm_slot_thread(void *arg)
 					/*********** 选择上级节点 ***********/
 					/* 这里可以考虑排除上一次选定的上级节点，因为上一次的上级节点并不稳定 */
 					level = 32;				
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+					for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						if(bs_num == neighbor_map[net_i]->BS_num)
 						{
@@ -1241,7 +1261,7 @@ void *hm_slot_thread(void *arg)
 					service_frame.lcclock_lv = neighbor_map[net_i]->lcclock_lv;
 					service_frame.l_BS = neighbor_map[net_i]->l_BS;
 
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+					for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						if(bs_num == neighbor_map[net_i]->BS_num)
 						{
@@ -1338,7 +1358,7 @@ void *hm_slot_thread(void *arg)
 				while(1)
 				{
 					sem_wait(&(empty[1]));	/* 等待缓冲区有数据+1，或者定时器到来+1，如果两者同时+1，定时器到来退出，数据依然没有读取，信号量还是1，下次可以继续读取 */
-
+					
 					if(timer_flag == 1)    /* 如果是定时器到来的话直接退出 */
 					{
 						timer_flag = 0;
@@ -1354,7 +1374,7 @@ void *hm_slot_thread(void *arg)
 						rval = hm_MAC_frame_rcv_proc3(&slot_cache1, net_i);
 						if(rval == 0x08)
 						{
-							//EPT(stderr, "hm_slot_thread1: case NET sem_post\n");
+							EPT(stderr, "hm_slot_thread1: case NET sem_post\n");
 							/* 考虑发送勤务帧和LowMAC时隙表 */
 							sem_post(&(empty[2]));
 						}
@@ -1367,7 +1387,7 @@ void *hm_slot_thread(void *arg)
 						rval = hm_MAC_frame_rcv_proc3(&slot_cache2, net_i);
 						if(rval == 0x08)
 						{
-							//EPT(stderr, "hm_slot_thread2: case NET sem_post\n");
+							EPT(stderr, "hm_slot_thread2: case NET sem_post\n");
 							/* 考虑发送勤务帧和LowMAC时隙表 */
 							sem_post(&(empty[2]));
 						}
@@ -1376,8 +1396,8 @@ void *hm_slot_thread(void *arg)
 					}
 
 					/* 查看是否满足条件，如果满足则关闭定时器，退出循环 */
-					if(neighbor_map[net_i]->netID != neighbor_map[net_i]->localID && neighbor_map_manage[net_i]->sf_rf_num > 0)
-					{
+					if(neighbor_map[net_i]->netID != neighbor_map[net_i]->localID && neighbor_map_manage[net_i]->sf_rf_num > 1)
+					{						
 						new_value.it_value.tv_sec = 0;
                         new_value.it_value.tv_usec = 0;
                         new_value.it_interval.tv_sec = 0;
@@ -1414,7 +1434,7 @@ void *hm_slot_thread(void *arg)
 					service_frame.lcclock_lv = neighbor_map[net_i]->lcclock_lv;
 					service_frame.l_BS = neighbor_map[net_i]->l_BS;
 				
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+					for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						if(bs_num == neighbor_map[net_i]->BS_num)
 						{
@@ -1542,65 +1562,72 @@ void *hm_slot_thread(void *arg)
 				{
 					EPT(stderr, "3_3\n");
                 	/*********** 清空操作 ***********/
-					for(i=0; i<netnum; i++)
+					/* 写锁 */
+					pthread_rwlock_wrlock(&rw_lock);
+					
+					net_count = 0;
+					for(i=0; i<MAX_NET_NUM; i++)
 					{
-						/* 写锁 */
-						pthread_rwlock_wrlock(&rw_lock);
-
-						U8 bs;
-						for(bs=0; bs<MAX_CFS_PSF; bs++)
-						{
-							if(bs_num == neighbor_map[i]->BS_num)
+						//U8 bs;
+						if(netID[i] != 0)
+						{	
+							for(bs=0; bs<MAX_CFS_PSF + 1; bs++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 							{
-								bs_num = 0;  /* 保证后续使用的正确性 */
-								break;
-							}
-							if(neighbor_map[i]->BS[bs][0].BS_ID != 0)
-							{
-								bs_num++;
-								node_num = 0;
-								for(j = 1; j <= MAX_NODE_CNT; j++)	/* 1~32节点轮询 */
+								if(bs_num == neighbor_map[i]->BS_num)
 								{
-									if(neighbor_map[i]->BS[bs][j].BS_flag)   
-									{
-										node_num++;
-										if(neighbor_map[i]->BS[bs][j].life)
-										{
-											/* 清空时隙生存期维护线程 10.30*/
-											rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
-											if(rval != 0)						
-												EPT(stderr, "CON3_3: pthread_cancel error code1 %d\n", rval);
-											rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
-											if(rval != 0)						
-												EPT(stderr, "CON3_3: pthread_join error code1 %d\n", rval);							
-											
-											rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
-											if(rval != 0)						
-												EPT(stderr, "CON3_3: pthread_cancel error code2 %d\n", rval);
-											rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
-											if(rval != 0)						
-												EPT(stderr, "CON3_3: pthread_join error code2 %d\n", rval);	
-											
-											sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
-										}
-									}
-									if(node_num == neighbor_map[i]->BS[bs][0].BS_ID)  /* 查看是否等于占用此时隙的节点总数 */
-										break;
+									bs_num = 0;  /* 保证后续使用的正确性 */
+									break;
 								}
-							}			
-						}
-
-						free(neighbor_map[i]);
-						neighbor_map[i] = NULL;
-						free(neighbor_map_manage[i]);
-						neighbor_map_manage[i] = NULL;
-
-						/* 解锁 */
-						pthread_rwlock_unlock(&rw_lock);
-					}
+								if(neighbor_map[i]->BS[bs][0].BS_ID != 0)
+								{
+									bs_num++;
+									node_num = 0;
+									for(j = 1; j <= MAX_NODE_CNT; j++)	/* 1~32节点轮询 */
+									{
+										if(neighbor_map[i]->BS[bs][j].BS_flag)   
+										{
+											node_num++;
+											if(neighbor_map[i]->BS[bs][j].life)
+											{
+												/* 清空时隙生存期维护线程 10.30*/
+												rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_cancel error code1 %d\n", rval);
+												rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_join error code1 %d\n", rval);							
+												
+												rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_cancel error code2 %d\n", rval);
+												rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_join error code2 %d\n", rval);	
+												
+												sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
+											}
+										}
+										if(node_num == neighbor_map[i]->BS[bs][0].BS_ID)  /* 查看是否等于占用此时隙的节点总数 */
+											break;
+									}
+								}	
+							}
+							free(neighbor_map[i]);
+							neighbor_map[i] = NULL;
+							free(neighbor_map_manage[i]);
+							neighbor_map_manage[i] = NULL;
+							
+							net_count++;
+							if(net_count == netnum)
+								break;								
+						}							
+					}						
 					memset(netID, 0, sizeof(netID));
 					netnum = 0;
 					sf_count = 0;
+					
+					/* 解锁 */
+					pthread_rwlock_unlock(&rw_lock);					
 
 					/*********** 状态改变 ***********/
 					nxt_state = SCN;
@@ -1628,64 +1655,72 @@ void *hm_slot_thread(void *arg)
 				{
 					EPT(stderr, "3_4\n");
                 	/*********** 清空操作 ***********/
-					for(i=0; i<netnum; i++)
+					/* 写锁 */
+					pthread_rwlock_wrlock(&rw_lock);
+					
+					net_count = 0;
+					for(i=0; i<MAX_NET_NUM; i++)
 					{
-						/* 写锁 */
-						pthread_rwlock_wrlock(&rw_lock);
-
-						U8 bs;
-						for(bs=0; bs<MAX_CFS_PSF; bs++)
-						{
-							if(bs_num == neighbor_map[i]->BS_num)
+						//U8 bs;
+						if(netID[i] != 0)
+						{	
+							for(bs=0; bs<MAX_CFS_PSF + 1; bs++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 							{
-								bs_num = 0;  /* 保证后续使用的正确性 */
-								break;
-							}
-							if(neighbor_map[i]->BS[bs][0].BS_ID != 0)
-							{
-								bs_num++;
-								node_num = 0;
-								for(j = 1; j <= MAX_NODE_CNT; j++)	/* 1~32节点轮询 */
+								if(bs_num == neighbor_map[i]->BS_num)
 								{
-									if(neighbor_map[i]->BS[bs][j].BS_flag)   
-									{
-										node_num++;
-										if(neighbor_map[i]->BS[bs][j].life)
-										{
-											/* 清空时隙生存期维护线程 10.30*/
-											rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
-											if(rval != 0)						
-												EPT(stderr, "CON3_4: pthread_cancel error code1 %d\n", rval);
-											rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
-											if(rval != 0)						
-												EPT(stderr, "CON3_4: pthread_join error code1 %d\n", rval);							
-											
-											rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
-											if(rval != 0)						
-												EPT(stderr, "CON3_4: pthread_cancel error code2 %d\n", rval);
-											rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
-											if(rval != 0)						
-												EPT(stderr, "CON3_4: pthread_join error code2 %d\n", rval);	
-											
-											sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
-										}
-									}
-									if(node_num == neighbor_map[i]->BS[bs][0].BS_ID)  /* 查看是否等于占用此时隙的节点总数 */
-										break;
+									bs_num = 0;  /* 保证后续使用的正确性 */
+									break;
 								}
-							}		
-						}
-
-						free(neighbor_map[i]);
-						neighbor_map[i] = NULL;
-						free(neighbor_map_manage[i]);
-						neighbor_map_manage[i] = NULL;
-
-						/* 解锁 */
-						pthread_rwlock_unlock(&rw_lock);
-					}
+								if(neighbor_map[i]->BS[bs][0].BS_ID != 0)
+								{
+									bs_num++;
+									node_num = 0;
+									for(j = 1; j <= MAX_NODE_CNT; j++)	/* 1~32节点轮询 */
+									{
+										if(neighbor_map[i]->BS[bs][j].BS_flag)   
+										{
+											node_num++;
+											if(neighbor_map[i]->BS[bs][j].life)
+											{
+												/* 清空时隙生存期维护线程 10.30*/
+												rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_cancel error code1 %d\n", rval);
+												rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_join error code1 %d\n", rval);							
+												
+												rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_cancel error code2 %d\n", rval);
+												rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_join error code2 %d\n", rval);	
+												
+												sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
+											}
+										}
+										if(node_num == neighbor_map[i]->BS[bs][0].BS_ID)  /* 查看是否等于占用此时隙的节点总数 */
+											break;
+									}
+								}	
+							}
+							free(neighbor_map[i]);
+							neighbor_map[i] = NULL;
+							free(neighbor_map_manage[i]);
+							neighbor_map_manage[i] = NULL;
+							
+							net_count++;
+							if(net_count == netnum)
+								break;								
+						}							
+					}						
 					memset(netID, 0, sizeof(netID));
 					netnum = 0;
+					
+					
+					/* 解锁 */
+					pthread_rwlock_unlock(&rw_lock);					
 
 					/*********** 状态改变 ***********/
 					nxt_state = SCN;
@@ -1713,65 +1748,72 @@ void *hm_slot_thread(void *arg)
 				{
 					EPT(stderr, "3_5\n");
                 	/*********** 清空操作 ***********/
-					for(i=0; i<netnum; i++)
+					/* 写锁 */
+					pthread_rwlock_wrlock(&rw_lock);
+					
+					net_count = 0;
+					for(i=0; i<MAX_NET_NUM; i++)
 					{
-						/* 写锁 */
-						pthread_rwlock_wrlock(&rw_lock);
-
-						U8 bs;
-						for(bs=0; bs<MAX_CFS_PSF; bs++)
-						{
-							if(bs_num == neighbor_map[i]->BS_num)
+						//U8 bs;
+						if(netID[i] != 0)
+						{	
+							for(bs=0; bs<MAX_CFS_PSF + 1; bs++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 							{
-								bs_num = 0;  /* 保证后续使用的正确性 */
-								break;
-							}
-							if(neighbor_map[i]->BS[bs][0].BS_ID != 0)
-							{
-								bs_num++;
-								node_num = 0;
-								for(j = 1; j <= MAX_NODE_CNT; j++)	/* 1~32节点轮询 */
+								if(bs_num == neighbor_map[i]->BS_num)
 								{
-									if(neighbor_map[i]->BS[bs][j].BS_flag)   
-									{
-										node_num++;
-										if(neighbor_map[i]->BS[bs][j].life)
-										{
-											/* 清空时隙生存期维护线程 10.30*/
-											rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
-											if(rval != 0)						
-												EPT(stderr, "CON3_5: pthread_cancel error code1 %d\n", rval);
-											rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
-											if(rval != 0)						
-												EPT(stderr, "CON3_5: pthread_join error code1 %d\n", rval);							
-											
-											rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
-											if(rval != 0)						
-												EPT(stderr, "CON3_5: pthread_cancel error code2 %d\n", rval);
-											rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
-											if(rval != 0)						
-												EPT(stderr, "CON3_5: pthread_join error code2 %d\n", rval);	
-											
-											sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
-										}
-									}
-									if(node_num == neighbor_map[i]->BS[bs][0].BS_ID)  /* 查看是否等于占用此时隙的节点总数 */
-										break;
+									bs_num = 0;  /* 保证后续使用的正确性 */
+									break;
 								}
-							}	
-						}
-
-						free(neighbor_map[i]);
-						neighbor_map[i] = NULL;
-						free(neighbor_map_manage[i]);
-						neighbor_map_manage[i] = NULL;
-
-						/* 解锁 */
-						pthread_rwlock_unlock(&rw_lock);
-					}
+								if(neighbor_map[i]->BS[bs][0].BS_ID != 0)
+								{
+									bs_num++;
+									node_num = 0;
+									for(j = 1; j <= MAX_NODE_CNT; j++)	/* 1~32节点轮询 */
+									{
+										if(neighbor_map[i]->BS[bs][j].BS_flag)   
+										{
+											node_num++;
+											if(neighbor_map[i]->BS[bs][j].life)
+											{
+												/* 清空时隙生存期维护线程 10.30*/
+												rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_cancel error code1 %d\n", rval);
+												rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_join error code1 %d\n", rval);							
+												
+												rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_cancel error code2 %d\n", rval);
+												rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
+												if(rval != 0)						
+													EPT(stderr, "CON3_10: pthread_join error code2 %d\n", rval);	
+												
+												sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
+											}
+										}
+										if(node_num == neighbor_map[i]->BS[bs][0].BS_ID)  /* 查看是否等于占用此时隙的节点总数 */
+											break;
+									}
+								}	
+							}
+							free(neighbor_map[i]);
+							neighbor_map[i] = NULL;
+							free(neighbor_map_manage[i]);
+							neighbor_map_manage[i] = NULL;
+							
+							net_count++;
+							if(net_count == netnum)
+								break;								
+						}							
+					}						
 					memset(netID, 0, sizeof(netID));
 					netnum = 0;
 					sf_count = 0;
+					
+					/* 解锁 */
+					pthread_rwlock_unlock(&rw_lock);					
 
 					/*********** 状态改变 ***********/
 					nxt_state = SCN;
@@ -1795,9 +1837,46 @@ void *hm_slot_thread(void *arg)
 					break;
             	}
 
-				if(neighbor_map[net_i]->netID != neighbor_map[net_i]->localID && neighbor_map_manage[net_i]->sf_rf_num > 0)    /* 满足CON3_6 */
+				if(neighbor_map[net_i]->netID != neighbor_map[net_i]->localID && neighbor_map_manage[net_i]->sf_rf_num > 1)    /* 满足CON3_6 */
 				{
 					EPT(stderr, "3_6\n");
+                	/*********** 状态改变 ***********/
+					nxt_state = NET;
+
+					/* 读锁 */
+					pthread_rwlock_rdlock(&rw_lock);
+
+					/* 状态改变，下发状态改变帧 */
+					memset(&H2L_MAC_frame, 0, sizeof(H2L_MAC_frame));
+					H2L_MAC_frame.referenceID = neighbor_map[net_i]->referenceID;
+					H2L_MAC_frame.rfclock_lv = neighbor_map[net_i]->rfclock_lv;
+					H2L_MAC_frame.localID = neighbor_map[net_i]->localID;
+					H2L_MAC_frame.lcclock_lv = neighbor_map[net_i]->lcclock_lv;
+					H2L_MAC_frame.state = 7;          /* 节点状态变为 NET */
+					H2L_MAC_frame.res = 0;
+					H2L_MAC_frame.slotnum = 8;
+					H2L_MAC_frame.slotlen = 40000;
+
+					/* 解锁 */
+					pthread_rwlock_unlock(&rw_lock);
+
+					pthread_mutex_lock(&mutex_queue[4]);
+					hm_queue_enter(link_queue, 4, sizeof(H2L_MAC_frame), (char *)&H2L_MAC_frame, HL_IF_DATA);	 /* 送到 TQ_4 队列 */
+					sem_post(&(empty[0]));
+					pthread_mutex_unlock(&mutex_queue[4]);
+
+					/*********** 清空操作 ***********/
+					neighbor_map_manage[net_i]->sf_samenet_get = 0;
+					neighbor_map_manage[net_i]->sf_diffnet_get = 0;
+					neighbor_map_manage[net_i]->sf_rf_num = 0;
+					sf_count = 0;
+
+					break;
+            	}
+
+				if(neighbor_map[net_i]->netID != neighbor_map[net_i]->localID && neighbor_map_manage[net_i]->sf_rf_num == 1)    /* 满足CON3_6_1 */
+				{
+					EPT(stderr, "3_6_1\n");
                 	/*********** 状态改变 ***********/
 					nxt_state = NET;
 
@@ -1845,7 +1924,7 @@ void *hm_slot_thread(void *arg)
 					pthread_rwlock_rdlock(&rw_lock);
 
 					/* 判断具体满足哪个条件 */	
-					for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+					for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 					{
 						if(bs_num == neighbor_map[net_i]->BS_num)
 						{
@@ -1861,15 +1940,19 @@ void *hm_slot_thread(void *arg)
 								if(neighbor_map[net_i]->BS[i][j].BS_flag)
 								{
 									node_num++;
-									
-									if(neighbor_map[net_i]->BS[i][j].clock_lv <= neighbor_map[net_i]->rfclock_lv && neighbor_map[net_i]->BS[i][j].hop == 1 && neighbor_map[net_i]->BS[i][j].state == NET)
+
+									/* 以下的判断均排除上级节点，因为收不到上级节点发送的勤务帧才会落入这个状态，此时的时隙表中可能还会残存着上级节点的信息(两跳) */
+									if(neighbor_map[net_i]->BS[i][j].clock_lv <= neighbor_map[net_i]->rfclock_lv && neighbor_map[net_i]->BS[i][j].hop == 1 && neighbor_map[net_i]->BS[i][j].state == NET && neighbor_map[net_i]->BS[i][j].BS_ID != neighbor_map[net_i]->referenceID)
 									{
 										flag3_7 = 1;  /* 时隙表中有大于等于上级节点时钟级别的一跳NET邻节点，时钟级别越大数值越小 11.15 */
 										break;
 									}
 									
-									if(neighbor_map[net_i]->BS[i][j].clock_lv < neighbor_map[net_i]->lcclock_lv && neighbor_map[net_i]->BS[i][j].state == NET)
+									if(neighbor_map[net_i]->BS[i][j].clock_lv < neighbor_map[net_i]->lcclock_lv && neighbor_map[net_i]->BS[i][j].state == NET && neighbor_map[net_i]->BS[i][j].BS_ID != neighbor_map[net_i]->referenceID)
+									{	
 										flag3_8 = 1;  /* 两跳范围内有大于本节点时钟级别的NET节点(两跳内) 11.15 */
+										EPT(stderr, "net_i = %d i = %d j = %d\n", net_i, i, j);
+									}
 									else 
 									{	
 										if(neighbor_map[net_i]->BS[i][j].clock_lv == neighbor_map[net_i]->lcclock_lv && neighbor_map[net_i]->BS[i][j].BS_ID < neighbor_map[net_i]->localID && neighbor_map[net_i]->BS[i][j].state == NET)
@@ -1925,7 +2008,7 @@ void *hm_slot_thread(void *arg)
 						/*********** 重新选择上级节点 ***********/						
 						/* 这里可以考虑排除上一次选定的上级节点，因为上一次的上级节点并不稳定 */
 						level = 32;				
-						for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+						for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 						{
 							//EPT(stderr, "bs_num = %d\n", bs_num);
 							if(bs_num == neighbor_map[net_i]->BS_num)
@@ -2004,7 +2087,7 @@ void *hm_slot_thread(void *arg)
 						service_frame.lcclock_lv = neighbor_map[net_i]->lcclock_lv;
 						service_frame.l_BS = neighbor_map[net_i]->l_BS;
 
-						for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+						for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 						{
 							if(bs_num == neighbor_map[net_i]->BS_num)
 							{
@@ -2125,7 +2208,7 @@ void *hm_slot_thread(void *arg)
 						/*********** 重新选择上级节点 ***********/						
 						/* 这里可以考虑排除上一次选定的上级节点，因为上一次的上级节点并不稳定 */
 						level = 32;				
-						for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+						for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 						{
 							if(bs_num == neighbor_map[net_i]->BS_num)
 							{
@@ -2201,7 +2284,7 @@ void *hm_slot_thread(void *arg)
 						service_frame.lcclock_lv = neighbor_map[net_i]->lcclock_lv;
 						service_frame.l_BS = neighbor_map[net_i]->l_BS;
 
-						for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+						for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 						{
 							if(bs_num == neighbor_map[net_i]->BS_num)
 							{
@@ -2294,65 +2377,72 @@ void *hm_slot_thread(void *arg)
 						EPT(stderr, "3_9\n");						
 
 						/*********** 清空操作 ***********/
-						for(i=0; i<netnum; i++)
+						/* 写锁 */
+						pthread_rwlock_wrlock(&rw_lock);
+						
+						net_count = 0;
+						for(i=0; i<MAX_NET_NUM; i++)
 						{
-							/* 写锁 */
-							pthread_rwlock_wrlock(&rw_lock);
-
-							U8 bs;
-							for(bs=0; bs<MAX_CFS_PSF; bs++)
-							{
-								if(bs_num == neighbor_map[i]->BS_num)
+							//U8 bs;
+							if(netID[i] != 0)
+							{	
+								for(bs=0; bs<MAX_CFS_PSF + 1; bs++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 								{
-									bs_num = 0;  /* 保证后续使用的正确性 */
-									break;
-								}
-								if(neighbor_map[i]->BS[bs][0].BS_ID != 0)
-								{
-									bs_num++;
-									node_num = 0;
-									for(j = 1; j <= MAX_NODE_CNT; j++)	/* 1~32节点轮询 */
+									if(bs_num == neighbor_map[i]->BS_num)
 									{
-										if(neighbor_map[i]->BS[bs][j].BS_flag)   
-										{
-											node_num++;
-											if(neighbor_map[i]->BS[bs][j].life)
-											{
-												/* 清空时隙生存期维护线程 10.30*/
-												rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
-												if(rval != 0)						
-													EPT(stderr, "CON3_5: pthread_cancel error code1 %d\n", rval);
-												rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
-												if(rval != 0)						
-													EPT(stderr, "CON3_5: pthread_join error code1 %d\n", rval);							
-												
-												rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
-												if(rval != 0)						
-													EPT(stderr, "CON3_5: pthread_cancel error code2 %d\n", rval);
-												rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
-												if(rval != 0)						
-													EPT(stderr, "CON3_5: pthread_join error code2 %d\n", rval);	
-												
-												sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
-											}
-										}
-										if(node_num == neighbor_map[i]->BS[bs][0].BS_ID)  /* 查看是否等于占用此时隙的节点总数 */
-											break;
+										bs_num = 0;  /* 保证后续使用的正确性 */
+										break;
 									}
-								}	
-							}
-
-							free(neighbor_map[i]);
-							neighbor_map[i] = NULL;
-							free(neighbor_map_manage[i]);
-							neighbor_map_manage[i] = NULL;
-
-							/* 解锁 */
-							pthread_rwlock_unlock(&rw_lock);
-						}
+									if(neighbor_map[i]->BS[bs][0].BS_ID != 0)
+									{
+										bs_num++;
+										node_num = 0;
+										for(j = 1; j <= MAX_NODE_CNT; j++)	/* 1~32节点轮询 */
+										{
+											if(neighbor_map[i]->BS[bs][j].BS_flag)   
+											{
+												node_num++;
+												if(neighbor_map[i]->BS[bs][j].life)
+												{
+													/* 清空时隙生存期维护线程 10.30*/
+													rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
+													if(rval != 0)						
+														EPT(stderr, "CON3_10: pthread_cancel error code1 %d\n", rval);
+													rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
+													if(rval != 0)						
+														EPT(stderr, "CON3_10: pthread_join error code1 %d\n", rval);							
+													
+													rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
+													if(rval != 0)						
+														EPT(stderr, "CON3_10: pthread_cancel error code2 %d\n", rval);
+													rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
+													if(rval != 0)						
+														EPT(stderr, "CON3_10: pthread_join error code2 %d\n", rval);	
+													
+													sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
+												}
+											}
+											if(node_num == neighbor_map[i]->BS[bs][0].BS_ID)  /* 查看是否等于占用此时隙的节点总数 */
+												break;
+										}
+									}	
+								}
+								free(neighbor_map[i]);
+								neighbor_map[i] = NULL;
+								free(neighbor_map_manage[i]);
+								neighbor_map_manage[i] = NULL;
+								
+								net_count++;
+								if(net_count == netnum)
+									break;								
+							}							
+						}						
 						memset(netID, 0, sizeof(netID));
 						netnum = 0;
 						sf_count = 0;
+						
+						/* 解锁 */
+						pthread_rwlock_unlock(&rw_lock);						
 
 						/*********** 状态改变 ***********/
 						nxt_state = SCN;
@@ -2373,6 +2463,10 @@ void *hm_slot_thread(void *arg)
 						sem_post(&(empty[0]));
 						pthread_mutex_unlock(&mutex_queue[4]);
 
+						/* 延时入网 1.10 
+						usleep(300000);*/
+						sleep(1*localID);
+
 						break;
 					}
 				
@@ -2382,65 +2476,72 @@ void *hm_slot_thread(void *arg)
 						EPT(stderr, "3_10\n");
 						
 						/*********** 清空操作 ***********/
-						for(i=0; i<netnum; i++)
+						/* 写锁 */
+						pthread_rwlock_wrlock(&rw_lock);
+						
+						net_count = 0;
+						for(i=0; i<MAX_NET_NUM; i++)
 						{
-							/* 写锁 */
-							pthread_rwlock_wrlock(&rw_lock);
-
-							U8 bs;
-							for(bs=0; bs<MAX_CFS_PSF; bs++)
-							{
-								if(bs_num == neighbor_map[i]->BS_num)
+							//U8 bs;
+							if(netID[i] != 0)
+							{	
+								for(bs=0; bs<MAX_CFS_PSF + 1; bs++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 								{
-									bs_num = 0;  /* 保证后续使用的正确性 */
-									break;
-								}
-								if(neighbor_map[i]->BS[bs][0].BS_ID != 0)
-								{
-									bs_num++;
-									node_num = 0;
-									for(j = 1; j <= MAX_NODE_CNT; j++)	/* 1~32节点轮询 */
+									if(bs_num == neighbor_map[i]->BS_num)
 									{
-										if(neighbor_map[i]->BS[bs][j].BS_flag)   
-										{
-											node_num++;
-											if(neighbor_map[i]->BS[bs][j].life)
-											{
-												/* 清空时隙生存期维护线程 10.30*/
-												rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
-												if(rval != 0)						
-													EPT(stderr, "CON3_5: pthread_cancel error code1 %d\n", rval);
-												rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
-												if(rval != 0)						
-													EPT(stderr, "CON3_5: pthread_join error code1 %d\n", rval);							
-												
-												rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
-												if(rval != 0)						
-													EPT(stderr, "CON3_5: pthread_cancel error code2 %d\n", rval);
-												rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
-												if(rval != 0)						
-													EPT(stderr, "CON3_5: pthread_join error code2 %d\n", rval);	
-												
-												sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
-											}
-										}
-										if(node_num == neighbor_map[i]->BS[bs][0].BS_ID)  /* 查看是否等于占用此时隙的节点总数 */
-											break;
+										bs_num = 0;  /* 保证后续使用的正确性 */
+										break;
 									}
-								}	
-							}
-
-							free(neighbor_map[i]);
-							neighbor_map[i] = NULL;
-							free(neighbor_map_manage[i]);
-							neighbor_map_manage[i] = NULL;
-
-							/* 解锁 */
-							pthread_rwlock_unlock(&rw_lock);
-						}
+									if(neighbor_map[i]->BS[bs][0].BS_ID != 0)
+									{
+										bs_num++;
+										node_num = 0;
+										for(j = 1; j <= MAX_NODE_CNT; j++)	/* 1~32节点轮询 */
+										{
+											if(neighbor_map[i]->BS[bs][j].BS_flag)   
+											{
+												node_num++;
+												if(neighbor_map[i]->BS[bs][j].life)
+												{
+													/* 清空时隙生存期维护线程 10.30*/
+													rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
+													if(rval != 0)						
+														EPT(stderr, "CON3_10: pthread_cancel error code1 %d\n", rval);
+													rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
+													if(rval != 0)						
+														EPT(stderr, "CON3_10: pthread_join error code1 %d\n", rval);							
+													
+													rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
+													if(rval != 0)						
+														EPT(stderr, "CON3_10: pthread_cancel error code2 %d\n", rval);
+													rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
+													if(rval != 0)						
+														EPT(stderr, "CON3_10: pthread_join error code2 %d\n", rval);	
+													
+													sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
+												}
+											}
+											if(node_num == neighbor_map[i]->BS[bs][0].BS_ID)  /* 查看是否等于占用此时隙的节点总数 */
+												break;
+										}
+									}	
+								}
+								free(neighbor_map[i]);
+								neighbor_map[i] = NULL;
+								free(neighbor_map_manage[i]);
+								neighbor_map_manage[i] = NULL;
+								
+								net_count++;
+								if(net_count == netnum)
+									break;								
+							}							
+						}						
 						memset(netID, 0, sizeof(netID));
 						netnum = 0;
-						sf_count = 0;							
+						sf_count = 0;
+						
+						/* 解锁 */
+						pthread_rwlock_unlock(&rw_lock);
 
 						/*********** 建网节点建立自己的邻节点维护表 ***********/
 						/* 选定BS = 0 更新邻节点表维护表 */
@@ -2481,7 +2582,7 @@ void *hm_slot_thread(void *arg)
 						service_frame.lcclock_lv = neighbor_map[netnum]->lcclock_lv;
 						service_frame.l_BS = neighbor_map[netnum]->l_BS;
 						
-						for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+						for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 						{
 							if(bs_num == neighbor_map[netnum]->BS_num)
 							{
@@ -2513,6 +2614,8 @@ void *hm_slot_thread(void *arg)
 							}
 						}
 						service_frame.num = max+1;
+						
+						EPT(stderr, "3_10: new netNO = %d netID = %d\n", netnum, neighbor_map[netnum]->netID);				
 
 						netnum++;   /* netnum现在应该为1 */
 
@@ -2571,8 +2674,9 @@ void *hm_slot_thread(void *arg)
 #endif				
 
 				else   /* 以上哪个条件也不符合 */
-				{
-					EPT(stderr, "hm_slot_thread: no cond choice in NET\n");
+				{					
+					EPT(stderr, "hm_slot_thread: net_i = %d netID = %d localID = %d sf_samenet_get = %d sf_diffnet_get = %d\n", net_i, neighbor_map[net_i]->netID, neighbor_map[net_i]->localID, neighbor_map_manage[net_i]->sf_samenet_get, neighbor_map_manage[net_i]->sf_diffnet_get);	
+					EPT(stderr, "hm_slot_thread: no choice in NET\n");
 					break;
 				}
 
@@ -2598,6 +2702,8 @@ void hm_MAC_frame_rcv_proc1(lm_packet_t *cache_p)
 	U8   i;        /* for  for(i=0; i<netnum; i++)   记录时隙号 */
 	U8   net_id;   /* 记录当前网络号!!!!! */
 	U8   node;     /* 记录占用某时隙的节点号 11.06 */
+	U8   net_count = 0;  /* 选择网络时计数 1.11 */  
+	
 	neighbor_map_t *neighbor_map_p;
 	service_frame_t *service_frame_p = (service_frame_t *)((mac_packet_t *)cache_p->data)->data;
 	//EPT(stderr, "hm_MAC_frame_rcv_proc1: cache_p->type = %d\n", cache_p->type);	
@@ -2633,8 +2739,7 @@ void hm_MAC_frame_rcv_proc1(lm_packet_t *cache_p)
 				neighbor_map_p = neighbor_map[netnum];    /* 记录当前邻节点表指针 */
 				neighbor_map_p->netID = id;     /* 为新的时隙表填充网络号 */ 
 				
-				EPT(stderr, "hm_MAC_frame_rcv_proc1: new net_id = %d\n", neighbor_map_p->netID);
-				
+				EPT(stderr, "hm_MAC_frame_rcv_proc1: new0 netNO = %d netID = %d\n", netnum, neighbor_map_p->netID);				
 				
 				net_id = netnum;               /* 记录当前网络号 */
 
@@ -2642,30 +2747,48 @@ void hm_MAC_frame_rcv_proc1(lm_packet_t *cache_p)
 			}
 			else
 			{
-				for(i=0; i<netnum; i++)
+				for(i=0; i<MAX_NET_NUM; i++)
 				{
 					if(id == netID[i])    /* 此勤务帧属于现有网络节点 */
 					{
 						neighbor_map_p = neighbor_map[i];  /* 记录当前邻节点表指针 */
 						net_id = i;      /* 记录当前网络号 */   
-						EPT(stderr, "hm_MAC_frame_rcv_proc1: old net_id = %d\n", net_id);
+						
+						EPT(stderr, "hm_MAC_frame_rcv_proc1: old netNO = %d netID = %d\n", net_id, id);
 						break;
 					}
+					else
+					{
+						if(netID[i] != 0)
+						{
+							net_count++;
+							if(net_count == netnum)
+								break;
+						}
+					}
 				}
-				if(i == netnum)        /* 此勤务帧来自新网络节点 */
+				
+				if(net_count == netnum)        /* 此勤务帧来自新网络节点 */
 				{
-					netID[netnum] = id;    /* 记录新网络的零级节点号 */
-
-					neighbor_map[netnum] = malloc(sizeof(neighbor_map_t));     /* 给邻节点时隙表指针分配内存 */
-					memset(neighbor_map[netnum], 0, sizeof(neighbor_map_t));   /* 初始化邻节点时隙表 */
-
-					neighbor_map_manage[netnum] = malloc(sizeof(neighbor_map_manage_t));    /* 给时隙表管理结构体分配指针 */
-					memset(neighbor_map_manage[netnum], 0, sizeof(neighbor_map_manage_t));  /* 初始化时隙表管理结构体 */
-
-					neighbor_map_p = neighbor_map[netnum];     /* 记录当前邻节点表指针 */
-					neighbor_map_p->netID = id;     /* 为新的时隙表填充网络号 */
-					net_id = netnum;       /* 记录当前网络号 */
-
+					for(i=0; i<MAX_NET_NUM; i++)
+					{
+						if(netID[i] == 0)
+						{							
+							netID[i] = id;    /* 记录新网络的零级节点号 */
+							
+							neighbor_map[i] = malloc(sizeof(neighbor_map_t));	   /* 给邻节点时隙表指针分配内存 */
+							memset(neighbor_map[i], 0, sizeof(neighbor_map_t));   /* 初始化邻节点时隙表 */
+		
+							neighbor_map_manage[i] = malloc(sizeof(neighbor_map_manage_t));	/* 给时隙表管理结构体分配指针 */
+							memset(neighbor_map_manage[i], 0, sizeof(neighbor_map_manage_t));	/* 初始化时隙表管理结构体 */
+		
+							neighbor_map_p = neighbor_map[i];	   /* 记录当前邻节点表指针 */
+							neighbor_map_p->netID = id; 	/* 为新的时隙表填充网络号 */
+							net_id = i;	   /* 记录当前网络号 */
+							EPT(stderr, "hm_MAC_frame_rcv_proc1: new netNO = %d netID = %d\n", net_id, neighbor_map_p->netID);	
+							break;
+						}
+					}					
 					netnum++;
 				}
 			}
@@ -2693,6 +2816,11 @@ void hm_MAC_frame_rcv_proc1(lm_packet_t *cache_p)
 				*/
 
 				node = service_frame_p->BS[i].BS_ID;
+
+				if(service_frame_p->BS[i].BS_ID == localID)
+				{
+					continue;
+				}
 
 				/* 开启对应的时隙维护线程 */					
 				if(neighbor_map_p->BS[i][node].life == 0)  /* 判断此时隙维护线程是否开启 */
@@ -2756,12 +2884,14 @@ void hm_MAC_frame_rcv_proc1(lm_packet_t *cache_p)
 	}
 }
 
-U8 hm_MAC_frame_rcv_proc2(lm_packet_t *cache_p, U8 net_i)
+U8 hm_MAC_frame_rcv_proc2(lm_packet_t *cache_p, U8 net_i)  /* 参数net_i是本地节点加入的网络号 1.12 */
 {
 	U8   id;        /* for  id = service_frame_p->netID*/
 	U8   i;         /* for  for(i=0; i<netnum; i++)   记录时隙号 */
-	U8   net_id;   /* 记录当前网络号!!!!! */
+	U8   net_id;   /* 记录当前勤务帧所在的网络号!!!!! */
 	U8   node;     /* 记录占用某时隙的节点号 11.06 */	
+	U8   net_count = 0;  /* 选择网络时计数 1.11 */  
+	
 	neighbor_map_t *neighbor_map_p;
 	service_frame_t *service_frame_p = (service_frame_t *)((mac_packet_t *)cache_p->data)->data;
 	//EPT(stderr, "hm_MAC_frame_rcv_proc2: cache_p->type = %d\n", cache_p->type);
@@ -2789,38 +2919,59 @@ U8 hm_MAC_frame_rcv_proc2(lm_packet_t *cache_p, U8 net_i)
 				neighbor_map_p = neighbor_map[netnum];    /* 记录当前邻节点表指针 */
 				neighbor_map_p->netID = id;     /* 为新的时隙表填充网络号 */
 				net_id = netnum;               /* 记录当前网络号 */
+				
+				EPT(stderr, "hm_MAC_frame_rcv_proc2: new0 netNO = %d netID = %d\n", netnum, neighbor_map_p->netID);				
 
 				netnum++;
 			}
 			else
 			{
-				for(i=0; i<netnum; i++)
+				for(i=0; i<MAX_NET_NUM; i++)
 				{
 					if(id == netID[i])    /* 此勤务帧属于现有网络节点 */
 					{
 						neighbor_map_p = neighbor_map[i];  /* 记录当前邻节点表指针 */
-						net_id = i;      /* 记录当前网络号 */
+						net_id = i;      /* 记录当前网络号 */   
+						
+						EPT(stderr, "hm_MAC_frame_rcv_proc2: old netNO = %d netID = %d\n", net_id, id);
 						break;
 					}
+					else
+					{
+						if(netID[i] != 0)
+						{
+							net_count++;
+							if(net_count == netnum)
+								break;
+						}
+					}
 				}
-				if(i == netnum)        /* 此勤务帧来自新网络节点 */
+				
+				if(net_count == netnum)        /* 此勤务帧来自新网络节点 */
 				{
-					netID[netnum] = id;    /* 记录新网络的零级节点号 */
-
-					neighbor_map[netnum] = malloc(sizeof(neighbor_map_t));     /* 给邻节点时隙表指针分配内存 */
-					memset(neighbor_map[netnum], 0, sizeof(neighbor_map_t));   /* 初始化邻节点时隙表 */
-
-					neighbor_map_manage[netnum] = malloc(sizeof(neighbor_map_manage_t));    /* 给时隙表管理结构体分配指针 */
-					memset(neighbor_map_manage[netnum], 0, sizeof(neighbor_map_manage_t));  /* 初始化时隙表管理结构体 */
-
-					neighbor_map_p = neighbor_map[netnum];     /* 记录当前邻节点表指针 */
-					neighbor_map_p->netID = id;     /* 为新的时隙表填充网络号 */
-					net_id = netnum;       /* 记录当前网络号 */
-
+					for(i=0; i<MAX_NET_NUM; i++)
+					{
+						if(netID[i] == 0)
+						{							
+							netID[i] = id;    /* 记录新网络的零级节点号 */
+							
+							neighbor_map[i] = malloc(sizeof(neighbor_map_t));	   /* 给邻节点时隙表指针分配内存 */
+							memset(neighbor_map[i], 0, sizeof(neighbor_map_t));   /* 初始化邻节点时隙表 */
+		
+							neighbor_map_manage[i] = malloc(sizeof(neighbor_map_manage_t));	/* 给时隙表管理结构体分配指针 */
+							memset(neighbor_map_manage[i], 0, sizeof(neighbor_map_manage_t));	/* 初始化时隙表管理结构体 */
+		
+							neighbor_map_p = neighbor_map[i];	   /* 记录当前邻节点表指针 */
+							neighbor_map_p->netID = id; 	/* 为新的时隙表填充网络号 */
+							net_id = i;	   /* 记录当前网络号 */
+							EPT(stderr, "hm_MAC_frame_rcv_proc2: new netNO = %d netID = %d\n", net_id, neighbor_map_p->netID);	
+							break;
+						}
+					}					
 					netnum++;
 				}
 			}
-
+			
 			if(net_id == net_i)     /* 表明收到的勤务帧属于本网络 */
 			{
 				if(service_frame_p->localID == neighbor_map_p->referenceID)    /* 表明收到上级节点勤务帧 */
@@ -3004,7 +3155,7 @@ U8 hm_MAC_frame_rcv_proc2(lm_packet_t *cache_p, U8 net_i)
 				}
 			}
 
-			else         /* 表明收到的勤务帧不属于本网络 */
+			else  /* 表明收到的勤务帧不属于本网络 */
 			{
 				/* 开始对勤务帧中每一个表项轮询 */
 				for(i=0; i<service_frame_p->num; i++)
@@ -3014,34 +3165,17 @@ U8 hm_MAC_frame_rcv_proc2(lm_packet_t *cache_p, U8 net_i)
 
 					node = service_frame_p->BS[i].BS_ID;
 
-					/* 开启对应的时隙维护线程 */
-					if(neighbor_map_p->BS_flag == 1)        /* 如果此时隙表选定了BS */
+					/* 开启对应的时隙维护线程 */					
+					if(service_frame_p->BS[i].BS_ID == localID)    /* 判断勤务帧内此节点是不是本节点 */
 					{
-						if(service_frame_p->BS[i].BS_ID == neighbor_map_p->localID)    /* 判断勤务帧内此节点是不是本节点 */
-						{
-							/*neighbor_map_p->BS[i].life = 0;
-							pthread_cancel(neighbor_map_manage[net_id]->bs_id[i]);
-							pthread_cancel(neighbor_map_manage[net_id]->bs_timer[i]);
-							sem_destroy(&(neighbor_map_manage[net_id]->bs_sem[i]));*/
-						}
-						else
-						{							
-							if(neighbor_map_p->BS[i][node].life == 0)     /* 判断此时隙维护线程是否开启 */
-							{
-								sem_init(&(neighbor_map_manage[net_id]->bs_sem[i][node]),0,0);   /* 初始化相应信号量，开启对应的时隙维护线程 */
-								neighbor_map_manage[net_id]->bs_net_BS_node[i][node] = (net_id<<16) | (i<<8) | node;  /* 记录网络号、时隙号、节点号 */
-								
-								pthread_create(&(neighbor_map_manage[net_id]->bs_tid[i][node]), NULL, hm_neighbor_map_thread, (void *)&neighbor_map_manage[net_id]->bs_net_BS_node[i][node]);
-								neighbor_map_p->BS[i][node].life = 1;
-							}
-							/* 将勤务帧数据对应拷贝到时隙表中 */
-							neighbor_map_p->BS[i][node].BS_ID = service_frame_p->BS[i].BS_ID;
-							neighbor_map_p->BS[i][node].clock_lv = service_frame_p->BS[i].clock_lv;
-							neighbor_map_p->BS[i][node].state = service_frame_p->BS[i].state;
-						}
+						continue;
+						/*neighbor_map_p->BS[i].life = 0;
+						pthread_cancel(neighbor_map_manage[net_id]->bs_id[i]);
+						pthread_cancel(neighbor_map_manage[net_id]->bs_timer[i]);
+						sem_destroy(&(neighbor_map_manage[net_id]->bs_sem[i]));*/
 					}
 					else
-					{
+					{							
 						if(neighbor_map_p->BS[i][node].life == 0)     /* 判断此时隙维护线程是否开启 */
 						{
 							sem_init(&(neighbor_map_manage[net_id]->bs_sem[i][node]),0,0);   /* 初始化相应信号量，开启对应的时隙维护线程 */
@@ -3054,12 +3188,7 @@ U8 hm_MAC_frame_rcv_proc2(lm_packet_t *cache_p, U8 net_i)
 						neighbor_map_p->BS[i][node].BS_ID = service_frame_p->BS[i].BS_ID;
 						neighbor_map_p->BS[i][node].clock_lv = service_frame_p->BS[i].clock_lv;
 						neighbor_map_p->BS[i][node].state = service_frame_p->BS[i].state;
-					}
-
-					/* 将勤务帧数据对应拷贝到时隙表中 
-					neighbor_map_p->BS[i].BS_ID = service_frame_p->BS[i].BS_ID;
-					neighbor_map_p->BS[i].clock_lv = service_frame_p->BS[i].clock_lv;
-					neighbor_map_p->BS[i].state = service_frame_p->BS[i].state;*/
+					}								
 
 					/* 更新被占用的时隙个数 */					
 					if(neighbor_map_p->BS[i][node].BS_flag == 0)
@@ -3129,6 +3258,7 @@ U8 hm_MAC_frame_rcv_proc3(lm_packet_t *cache_p, U8 net_i)
 	U8	 net_id;   /* 记录当前网络号!!!!! */
 	U8   node;     /* 记录占用某时隙的节点号 11.06 */	
 	int  res;
+	U8   net_count = 0;  /* 选择网络时计数 1.11 */
 	
 	neighbor_map_t *neighbor_map_p;
 	service_frame_t *service_frame_p = (service_frame_t *)((mac_packet_t *)cache_p->data)->data;
@@ -3158,33 +3288,54 @@ U8 hm_MAC_frame_rcv_proc3(lm_packet_t *cache_p, U8 net_i)
 				neighbor_map_p->netID = id; 	/* 为新的时隙表填充网络号 */
 				net_id = netnum;			   /* 记录当前网络号 */
 
+				EPT(stderr, "hm_MAC_frame_rcv_proc3: new0 netNO = %d netID = %d\n", netnum, neighbor_map_p->netID);				
+
 				netnum++;      /* 现在网络数为1 */
 			}
 			else
 			{
-				for(i=0; i<netnum; i++)
+				for(i=0; i<MAX_NET_NUM; i++)
 				{
-					if(id == netID[i])	  /* 此勤务帧属于现有网络节点 */
+					if(id == netID[i])    /* 此勤务帧属于现有网络节点 */
 					{
 						neighbor_map_p = neighbor_map[i];  /* 记录当前邻节点表指针 */
-						net_id = i; 	 /* 记录当前网络号 */
+						net_id = i;      /* 记录当前网络号 */   
+						
+						EPT(stderr, "hm_MAC_frame_rcv_proc3: old netNO = %d netID = %d\n", net_id, id);
 						break;
 					}
+					else
+					{
+						if(netID[i] != 0)
+						{
+							net_count++;
+							if(net_count == netnum)
+								break;
+						}
+					}
 				}
-				if(i == netnum) 	   /* 此勤务帧来自新网络节点 */
+				
+				if(net_count == netnum)        /* 此勤务帧来自新网络节点 */
 				{
-					netID[netnum] = id;    /* 记录新网络的零级节点号 */
-
-					neighbor_map[netnum] = malloc(sizeof(neighbor_map_t));	   /* 给邻节点时隙表指针分配内存 */
-					memset(neighbor_map[netnum], 0, sizeof(neighbor_map_t));   /* 初始化邻节点时隙表 */
-
-					neighbor_map_manage[netnum] = malloc(sizeof(neighbor_map_manage_t));	/* 给时隙表管理结构体分配指针 */
-					memset(neighbor_map_manage[netnum], 0, sizeof(neighbor_map_manage_t));	/* 初始化时隙表管理结构体 */
-
-					neighbor_map_p = neighbor_map[netnum];	   /* 记录当前邻节点表指针 */
-					neighbor_map_p->netID = id; 	/* 为新的时隙表填充网络号 */
-					net_id = netnum;	   /* 记录当前网络号 */
-
+					for(i=0; i<MAX_NET_NUM; i++)
+					{
+						if(netID[i] == 0)
+						{							
+							netID[i] = id;    /* 记录新网络的零级节点号 */
+							
+							neighbor_map[i] = malloc(sizeof(neighbor_map_t));	   /* 给邻节点时隙表指针分配内存 */
+							memset(neighbor_map[i], 0, sizeof(neighbor_map_t));   /* 初始化邻节点时隙表 */
+		
+							neighbor_map_manage[i] = malloc(sizeof(neighbor_map_manage_t));	/* 给时隙表管理结构体分配指针 */
+							memset(neighbor_map_manage[i], 0, sizeof(neighbor_map_manage_t));	/* 初始化时隙表管理结构体 */
+		
+							neighbor_map_p = neighbor_map[i];	   /* 记录当前邻节点表指针 */
+							neighbor_map_p->netID = id; 	/* 为新的时隙表填充网络号 */
+							net_id = i;	   /* 记录当前网络号 */
+							EPT(stderr, "hm_MAC_frame_rcv_proc3: new netNO = %d netID = %d\n", net_id, neighbor_map_p->netID);	
+							break;
+						}
+					}					
 					netnum++;
 				}
 			}
@@ -3192,17 +3343,13 @@ U8 hm_MAC_frame_rcv_proc3(lm_packet_t *cache_p, U8 net_i)
 			if(net_id == net_i) 	/* 表明收到的勤务帧属于本网络 */
 			{
 				/* 记录收到本网络勤务帧 */
-				neighbor_map_manage[net_id]->sf_samenet_get = 1;
+				neighbor_map_manage[net_id]->sf_samenet_get = 1;			
+				EPT(stderr, "hm_MAC_frame_rcv_proc3: samenet sf\n");	
 
-				if(service_frame_p->localID == neighbor_map_p->referenceID)    /* 表明收到上级节点勤务帧 */
+				if(service_frame_p->localID == neighbor_map_p->referenceID)    /* 表明收到上级节点发送的勤务帧 */
 				{
-					if(neighbor_map_manage[net_id]->sf_rf_num == 0)      /* 记录收到上级节点勤务帧的次数 */
-						neighbor_map_manage[net_id]->sf_rf_num++;
-					else
-					{
-						if(neighbor_map_manage[net_id]->sf_rf_num == 1)
-							neighbor_map_manage[net_id]->sf_rf_num++;
-					}
+					EPT(stderr, "hm_MAC_frame_rcv_proc3: rf sf\n");
+					neighbor_map_manage[net_id]->sf_rf_num++;  /* 记录收到上级节点勤务帧的次数/修改为大于1次 1.10 */					
 
 					/* 开始对勤务帧中每一个表项轮询 */
 					for(i=0; i<service_frame_p->num; i++)
@@ -3215,7 +3362,9 @@ U8 hm_MAC_frame_rcv_proc3(lm_packet_t *cache_p, U8 net_i)
 						/* 开启对应的时隙维护线程 */
 						if(service_frame_p->BS[i].BS_ID == neighbor_map_p->localID)    /* 判断勤务帧内此节点是不是本节点 */
 						{
-							//neighbor_map_manage[net_id]->sf_lc_get = 1;   /* 上级节点勤务帧中包含本节点信息 */
+							/* 如果收到的本节点信息与现有不符，则舍弃 12.14 */
+							if(i != neighbor_map_p->l_BS)
+								continue;			
 
 							/*neighbor_map_p->BS[i].life = 0;
 							res = pthread_cancel(neighbor_map_manage[net_id]->bs_id[i]);
@@ -3303,6 +3452,10 @@ U8 hm_MAC_frame_rcv_proc3(lm_packet_t *cache_p, U8 net_i)
 						/* 开启对应的时隙维护线程 */
 						if(service_frame_p->BS[i].BS_ID == neighbor_map_p->localID)    /* 判断勤务帧内此节点是不是本节点 */
 						{
+							/* 如果收到的本节点信息与现有不符，则舍弃 12.14 */
+							if(i != neighbor_map_p->l_BS)
+								continue;
+							
 							/*neighbor_map_p->BS[i].life = 0;					
 							res = pthread_cancel(neighbor_map_manage[net_id]->bs_id[i]);
 							EPT(stderr, "proc3: pthread_cancel error1 code %d\n", res);
@@ -3380,8 +3533,9 @@ U8 hm_MAC_frame_rcv_proc3(lm_packet_t *cache_p, U8 net_i)
 
 			else		 /* 表明收到的勤务帧不属于本网络 */
 			{
-				/* 记录收到异网络勤务帧 */
-				neighbor_map_manage[net_id]->sf_diffnet_get = 1;
+				EPT(stderr, "hm_MAC_frame_rcv_proc3: diffnet sf\n");
+				/* 记录收到异网络勤务帧/修改为net_i 1.12 */
+				neighbor_map_manage[net_i]->sf_diffnet_get = 1;
 
 				/* 开始对勤务帧中每一个表项轮询 */
 				for(i=0; i<service_frame_p->num; i++)
@@ -3391,34 +3545,17 @@ U8 hm_MAC_frame_rcv_proc3(lm_packet_t *cache_p, U8 net_i)
 					
 					node = service_frame_p->BS[i].BS_ID;  /* 修补 11.23 */
 
-					/* 开启对应的时隙维护线程 */
-					if(neighbor_map_p->BS_flag == 1)		/* 如果此时隙表选定了BS */
+					/* 开启对应的时隙维护线程 */					
+					if(service_frame_p->BS[i].BS_ID == localID)    /* 判断勤务帧内此节点是不是本节点 */
 					{
-						if(service_frame_p->BS[i].BS_ID == neighbor_map_p->localID)    /* 判断勤务帧内此节点是不是本节点 */
-						{
-							/*neighbor_map_p->BS[i].life = 0;
-							pthread_cancel(neighbor_map_manage[net_id]->bs_id[i]);
-							pthread_cancel(neighbor_map_manage[net_id]->bs_timer[i]);
-							sem_destroy(&(neighbor_map_manage[net_id]->bs_sem[i]));*/
-						}
-						else
-						{							
-							if(neighbor_map_p->BS[i][node].life == 0)     /* 判断此时隙维护线程是否开启 */
-							{
-								sem_init(&(neighbor_map_manage[net_id]->bs_sem[i][node]),0,0);   /* 初始化相应信号量，开启对应的时隙维护线程 */
-								neighbor_map_manage[net_id]->bs_net_BS_node[i][node] = (net_id<<16) | (i<<8) | node;  /* 记录网络号、时隙号、节点号 */
-								
-								pthread_create(&(neighbor_map_manage[net_id]->bs_tid[i][node]), NULL, hm_neighbor_map_thread, (void *)&neighbor_map_manage[net_id]->bs_net_BS_node[i][node]);
-								neighbor_map_p->BS[i][node].life = 1;
-							}
-							/* 将勤务帧数据对应拷贝到时隙表中 */
-							neighbor_map_p->BS[i][node].BS_ID = service_frame_p->BS[i].BS_ID;
-							neighbor_map_p->BS[i][node].clock_lv = service_frame_p->BS[i].clock_lv;
-							neighbor_map_p->BS[i][node].state = service_frame_p->BS[i].state;
-						}
+						continue;
+						/*neighbor_map_p->BS[i].life = 0;
+						pthread_cancel(neighbor_map_manage[net_id]->bs_id[i]);
+						pthread_cancel(neighbor_map_manage[net_id]->bs_timer[i]);
+						sem_destroy(&(neighbor_map_manage[net_id]->bs_sem[i]));*/
 					}
 					else
-					{
+					{							
 						if(neighbor_map_p->BS[i][node].life == 0)     /* 判断此时隙维护线程是否开启 */
 						{
 							sem_init(&(neighbor_map_manage[net_id]->bs_sem[i][node]),0,0);   /* 初始化相应信号量，开启对应的时隙维护线程 */
@@ -3432,11 +3569,6 @@ U8 hm_MAC_frame_rcv_proc3(lm_packet_t *cache_p, U8 net_i)
 						neighbor_map_p->BS[i][node].clock_lv = service_frame_p->BS[i].clock_lv;
 						neighbor_map_p->BS[i][node].state = service_frame_p->BS[i].state;
 					}
-
-					/* 将勤务帧数据对应拷贝到时隙表中 
-					neighbor_map_p->BS[i].BS_ID = service_frame_p->BS[i].BS_ID;
-					neighbor_map_p->BS[i].clock_lv = service_frame_p->BS[i].clock_lv;
-					neighbor_map_p->BS[i].state = service_frame_p->BS[i].state;*/
 
 					/* 更新被占用的时隙个数 */					
 					if(neighbor_map_p->BS[i][node].BS_flag == 0)
@@ -3535,7 +3667,25 @@ void *hm_neighbor_map_thread(void *i_p)
 			if(neighbor_map[net_i]->BS[bs_i][0].BS_ID == 0)
 			{
 				neighbor_map[net_i]->BS_num--;
-				EPT(stderr, "hm_neighbor_map_thread: BS_num = %d\n", neighbor_map[net_i]->BS_num);
+				EPT(stderr, "hm_neighbor_map_thread: net_i = %d BS_num = %d\n", net_i, neighbor_map[net_i]->BS_num);
+
+				/* 定时器到达后若时隙表中节点数为空，则删除相应表项及参数 1.12 */
+				if(neighbor_map[net_i]->BS_num == 0)
+				{
+					free(neighbor_map[net_i]);
+					neighbor_map[net_i] = NULL;
+					free(neighbor_map_manage[net_i]);
+					neighbor_map_manage[net_i] = NULL;
+
+					netID[net_i] = 0;
+					netnum--;
+						
+					EPT(stderr, "hm_neighbor_map_thread: net_i = %d is gone\n", net_i);
+					
+					/* 解锁 */
+					pthread_rwlock_unlock(&rw_lock);
+					break;
+				}
 			}
 			
 			/* 清空操作 */
@@ -3597,7 +3747,7 @@ void *hm_bs_life_thread(void *i_p)
 	}
 	
 #ifdef _HM_TEST
-		EPT(stderr, "hm_bs_life_thread: BS[%d][%d] time begin\n", bs_i, node_i);
+		EPT(stderr, "hm_bs_life_thread: net_i = %d BS[%d][%d] time begin\n", net_i, bs_i, node_i);
 #endif
 
 	struct timeval tv;
@@ -3608,7 +3758,7 @@ void *hm_bs_life_thread(void *i_p)
 	//usleep(600000);
 
 #ifdef _HM_TEST
-		EPT(stderr, "hm_bs_life_thread: BS[%d][%d] time up\n", bs_i, node_i);
+		EPT(stderr, "hm_bs_life_thread: net_i = %d BS[%d][%d] time up\n", net_i, bs_i, node_i);
 #endif
 
 	/* 写锁 */
@@ -3780,7 +3930,7 @@ void *hm_sf_ls_send_thread(void *arg)
 		service_frame.l_BS = neighbor_map[net_i]->l_BS;
 
 		/* 可以再次优化，利用BS_num 11.06/再次优化 11.07 */
-		for(i=0; i<MAX_CFS_PSF; i++)  /* 0~31时隙轮询 */
+		for(i=0; i<MAX_CFS_PSF + 1; i++)  /* 0~31时隙轮询/+1确保bs_num会清零 1.9 */
 		{
 			if(bs_num == neighbor_map[net_i]->BS_num)
 			{
@@ -3813,7 +3963,7 @@ void *hm_sf_ls_send_thread(void *arg)
 			}
 		}
 		service_frame.num = max+1;
-		EPT(stderr, "hm_sf_ls_send_thread: service_frame.num = %d\n", service_frame.num);
+		//EPT(stderr, "hm_sf_ls_send_thread: service_frame.num = %d\n", service_frame.num);
 		
 		/* 填充MAC帧 */
 		memset(&mac_packet, 0, sizeof(mac_packet));

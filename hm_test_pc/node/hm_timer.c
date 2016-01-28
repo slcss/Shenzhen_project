@@ -64,6 +64,7 @@ int hm_start_timer1()
 
     new_value.it_value.tv_sec = 0;
     new_value.it_value.tv_usec = 600000;
+    //new_value.it_value.tv_usec = 0;
     new_value.it_interval.tv_sec = 0;
     new_value.it_interval.tv_usec = 0;
 

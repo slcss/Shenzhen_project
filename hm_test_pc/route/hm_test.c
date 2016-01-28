@@ -191,6 +191,7 @@ int ht_rmsg_proc(mmsg_t *msg, int cnt)
 	int i,j, rval = 0;
 	lm_packet_t package;
 	LM_neighbor_map_t slot;
+	//H2L_MAC_frame_t frame;
 	//U8 node_count;  /* 用于退网时候的时隙查找 */
 
 	node = msg->node;
@@ -217,6 +218,20 @@ int ht_rmsg_proc(mmsg_t *msg, int cnt)
 		if(package.type == 0xff)
 		{
 			//EPT(fp, "ht_rmsg_proc: package.type = 0xff\n");
+
+			/* 当节点变为SCN状态时，需要清空时隙记录(此时需要开始侦听，不应该占用时隙发送勤务帧) 1.13 */
+			if(((H2L_MAC_frame_t *)package.data)->state == 0)
+			{
+				if(node_BS_flag[node])
+				{
+					BS[node_BS_backup[node]][node] = 0;
+					BS[node_BS_backup[node]][0]--;
+				
+					node_BS_backup[node] = 0;
+					node_BS_flag[node] = 0;
+					EPT(stderr, "ht_rmsg_proc: node %d is SCNing\n", node);	
+				}
+			}
 
 #if 0
 			/* 根据收到的状态改变帧做相应处理 加锁 */
@@ -445,6 +460,9 @@ void* ht_timer_thread(void *arg)
 			BS_count++;			
 		}	
 	}
+
+	/* 应该加1 1.24 */
+	count++;
 	
 	signal(SIGALRM, ht_timer_proc);
 	rval = setitimer(ITIMER_REAL, &new_value, NULL);
@@ -468,6 +486,7 @@ thread_return:
 	pthread_exit((void *)&rval);
 }
 
+#if 0
 void ht_timer_proc(int signo)
 {
 	int i,j;
@@ -482,14 +501,15 @@ void ht_timer_proc(int signo)
 		{
 			pthread_mutex_unlock(&a);
 			break;
-		}
-		node = i;
+		}		
 		pthread_mutex_unlock(&a);
-
+		
+		node = i;
 		if (BS[count][i])
 		{
 			EPT(fp, "timer_proc: BS[%d][%d] = %d\n", count, i, node);
-			
+
+			/* 查询node节点在拓扑中对应的可达节点 1.25 */
 			for (j = 0; j < MAX_NODE_CNT; j++)
 			{
 				if (j == node-1 || top[node-1][j] == 0)   /* 只考虑发送节点那一行的拓扑 */
@@ -501,6 +521,7 @@ void ht_timer_proc(int signo)
 					continue;
 				}
 
+				/* 找到了合适的j 1.21 */
 				pthread_mutex_lock(&b);
 #if 0
 				for(i=0;i<((service_frame_t *)((mac_packet_t *)((lm_packet_t *)((mmsg_t *)&base[node-1])->data)->data)->data)->num;i++)
@@ -531,79 +552,93 @@ void ht_timer_proc(int signo)
 		count = 0;
 	//EPT(fp, "timer_proc: count = %d\n", count);
 }
-
-
-
-#if 0
-void *ht_mid_manage_thread(void *arg)
-{
-	U8 node = *(U8 *)arg;
-	U8 i;
-	
-	while(1)
-	{
-		sem_wait(&(mid_manage[node-1]->sem));		
-
-		if(mid_manage[node-1]->timeup == 1)   /* 定时器到达 */
-		{
-			rqs[node-1] = -1;   /* 是按照-1来判断的 */
-
-			pthread_mutex_lock(&b);
-			memset(&base[node-1], 0, sizeof(mmsg_t));
-			num[node-1] = 0;
-			pthread_mutex_unlock(&b);
-			
-			for(i = 0; i<32; i++)
-			{
-				pthread_mutex_lock(&a);
-				//EPT(stderr, "BS[%d] = %d\n", i, BS[i]);
-				if(BS[i] == node)
-				{
-					BS[i] = 0;
-					EPT(stderr, "BS[%d] = %d\n", i, BS[i]);
-					pthread_mutex_unlock(&a);
-					break;
-				}
-				pthread_mutex_unlock(&a);				
-			}
-			
-			mid_manage[node-1]->timeup = 0;   /* 定时器结束的标记清零 */
-			mid_manage[node-1]->node = 0;
-			sem_destroy(&(mid_manage[node-1]->sem));
-
-			first[node-1] = 0;  /* 此节点对应的状态改变帧维护线程关闭 */
-
-			//EPT(stderr, "node %d 111\n", node);
-			
-			break;
-		}
-
-		else
-		{
-			if(mid_manage[node-1]->timeup == 0)
-				pthread_cancel(mid_manage[node-1]->timer);    /* 数据先于定时器到达，关闭定时器 */
-
-			pthread_create(&mid_manage[node-1]->timer, NULL, ht_mid_life_thread, arg);   /* 修改完毕开启计时 */
-			
-			//EPT(stderr, "node %d 222\n", node);
-		}
-
-	}
-}
-
-void *ht_mid_life_thread(void *arg)
-{
-	U8 node = *(U8 *)arg;
-
-	struct timeval tv;
-	tv.tv_sec = 5;     /* 有待调整 */
-	tv.tv_usec = 0;
-    select(0,NULL,NULL,NULL,&tv);   /* 定时器延时 */
-
-	mid_manage[node-1]->timeup = 1;      /* 定时器结束要标记 */
-
-	sem_post(&(mid_manage[node-1]->sem));
-
-	EPT(stderr, "ht_mid_life_thread: timeup!\n");
-}
 #endif
+
+void ht_timer_proc(int signo)
+{
+	int i,j;
+	int	rval = 0;
+	U8 node;
+	U8 BS_count = 0;  /* 用于发送时候的节点查找计数 */
+
+	/* 源、目的节点关系表，纵向表示源节点，横向表示目的节点，BS[X][0]表示此源节点启用 1.26 */
+	U8 BS_top[MAX_NODE_CNT+1][MAX_NODE_CNT+1] = {0};  
+	U8 BS_samecount[MAX_NODE_CNT+1] = {0};  /* 目的节点计数，防止占用同一时隙的节点有相同的目的节点 1.26 */
+
+	/* 查找占用count时隙的源节点及目的节点并记录 1.26 */
+	for(i = 1; i <= MAX_NODE_CNT; i++)
+	{
+		pthread_mutex_lock(&a);	
+		if(BS_count == BS[count][0])
+		{
+			pthread_mutex_unlock(&a);
+			break;
+		}		
+		pthread_mutex_unlock(&a);
+		
+		node = i;
+		if (BS[count][i])
+		{
+			EPT(fp, "timer_proc: BS[%d][%d] = %d\n", count, i, node);
+			BS_top[node][0] = 1;
+
+			/* 查询node节点在拓扑中对应的可达节点 1.25 */
+			for (j = 0; j < MAX_NODE_CNT; j++)
+			{
+				if (j == node-1 || top[node-1][j] == 0)   /* 只考虑发送节点那一行的拓扑 */
+					continue;
+
+				/* 找到了合适的目的节点j+1，记录到下面的两个表格中 1.26 */
+				else
+				{
+					BS_top[node][j+1] = 1;
+					BS_samecount[j+1]++;
+				}
+			}
+
+			/* 更新节点数 */
+			BS_count++;			
+		}	
+	}
+	BS_count = 0;
+
+	/* 在发送时候判断有没有冲突的目的节点 1.26 */
+	for(i = 1; i <= MAX_NODE_CNT; i++)
+	{
+		pthread_mutex_lock(&a);	
+		if(BS_count == BS[count][0])
+		{
+			pthread_mutex_unlock(&a);
+			break;
+		}		
+		pthread_mutex_unlock(&a);
+
+		if(BS_top[i][0])
+		{
+			for(j = 1; j <= MAX_NODE_CNT; j++)
+			{
+				/* 筛选出合适的目的节点j 1.27 */
+				if(BS_top[i][j] == 1 && BS_samecount[j] == 1 && rqs[j-1] != -1 && BS_top[j][0] != 1)
+				{					
+					pthread_mutex_lock(&b);
+					rval = msgsnd(rqs[j-1], (void *)&base[i-1], num[i-1], 0);				
+					pthread_mutex_unlock(&b);
+					if ( rval < 0 )
+					{
+						EPT(fp, "timer_proc: msgsnd() write msg failed,errno=%d[%s]\n", errno, strerror(errno));
+					}
+					else						
+						EPT(fp, "timer_proc: msgsnd() write msg at qid %d of node %d\n", rqs[j-1], j);
+				}
+			}
+			BS_count++;
+		}
+		
+	}
+	
+	count++;
+	if(count == 32)
+		count = 0;
+	//EPT(fp, "timer_proc: count = %d\n", count);
+}
+

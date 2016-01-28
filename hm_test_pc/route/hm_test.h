@@ -85,6 +85,19 @@ typedef struct _mid_manage_t{
  
 }mid_manage_t;
 
+/********************************************** 当前节点状态改变帧结构 **********************************************/
+typedef struct _H2L_MAC_frame_t{	
+	U8   referenceID;
+	U8   rfclock_lv;
+	U8   localID;
+	U8   lcclock_lv;
+	U8   res:5;
+	U8   state:3;
+	U8   slotnum;
+	U16  slotlen;
+}H2L_MAC_frame_t;
+
+
 
 int   ht_tinit(char*);
 int   ht_queues_init();
