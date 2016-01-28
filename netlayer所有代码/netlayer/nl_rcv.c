@@ -76,7 +76,7 @@ void* nl_qrv_thread(void *arg)		  //参数为接收线程id
 	while(1)
 	{
 	    printf("===========nl_layer waiting for data from nl_layer==========\n");
-		memset(&rcv_msg, sizeof(rcv_msg), 0);								//接收缓存每次使用前清空，因为只有这一个接收缓存
+		memset(&rcv_msg, 0, sizeof(rcv_msg));								//接收缓存每次使用前清空，因为只有这一个接收缓存
 		rcnt = msgrcv(qid, &rcv_msg, sizeof(mmsg_t) - sizeof(long), 0, 0);	//成功返回拷贝到结构体数据部分的字节数,失败返回-1
 		if (rcnt < 0)
 		{

@@ -60,7 +60,7 @@
 #endif
 
 /** very important  */
-#define _MR_TEST						/* for routing protocol test */
+//#define _MR_TEST						/* for routing protocol test */
 
 /* netlayer constants  */
 #define MAX_NODE_CNT		32			/* maximum number of network nodes */

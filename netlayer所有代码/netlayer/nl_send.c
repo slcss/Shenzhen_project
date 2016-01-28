@@ -20,7 +20,7 @@ int combine_send_pkt(nl_package_t * pkt)
 		snd_buf = (mmsg_t *)malloc(sizeof(mmsg_t));
 		if (snd_buf == NULL)
 			EPT(stderr, "malloc error when deal sigle pkt\n");
-		memset(&snd_buf, sizeof(snd_buf), 0);
+		memset(snd_buf, 0, sizeof(snd_buf));
 		snd_buf->mtype = get_data_type(pkt);
 		snd_buf->node = get_src_addr(pkt);
 		memcpy(&snd_buf->data, pkt->data + sizeof(mmhd_t), get_data_length(pkt));
@@ -148,7 +148,7 @@ int nl_send_to_himac(mmsg_t *msg,int len)
 	snd_buf = (mmsg_t *)malloc(sizeof(mmsg_t));
 	if (snd_buf == NULL)
 		EPT(stderr, "malloc error when deal sigle pkt\n");
-	memset(&snd_buf, sizeof(snd_buf), 0);
+	memset(snd_buf, 0, sizeof(snd_buf));
 	//snd_buf->mtype = MMSG_MP_DATA;							//设置类型为从网络层到HIMAC
 
 	//一共由三种类型，MMSG_IP_DATA，MMSG_FT_DATA，MMSG_RPM,MMSG_MAODV
@@ -243,7 +243,7 @@ int manage_nl_buf(int key)				//管理nl_buff，输入key，输出对应的buff_pool序号
 			(&nl_buf_pool[id])->flag = 0;
 		if((&nl_buf_pool[id])->flag == 0)		//如果找到空闲缓存则清空并预约这个缓存
 		{
-			memset(&nl_buf_pool[id], sizeof(nl_buf_pool), 0);
+			memset(&nl_buf_pool[id], 0, sizeof(nl_buf_pool));
 			(&nl_buf_pool[id])->KEY = key;
 			(&nl_buf_pool[id])->flag = 1;
 			(&nl_buf_pool[id])->time = ctime;
