@@ -3375,7 +3375,7 @@ void *hm_bs_life_thread(void *i_p)
 /* 发给LowMAC的时隙表 */
 void hm_LowMAC_slot_proc(U8 netnum)
 {
-	U8 i,max = 0;
+	U8 i,max;
 
 	memset(&LM_neighbor_map, 0, sizeof(LM_neighbor_map));
 	LM_neighbor_map.localBS = neighbor_map[netnum]->l_BS;

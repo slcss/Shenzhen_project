@@ -639,16 +639,23 @@ void* hm_lm2nl_thread(void *arg)
 		//EPT(stderr, "hm_lm2nl_thread: HighMAC receive a LowMAC msg, type = %x\n", package->type);
 		//EPT(stderr, "hm_lm2nl_thread: HighMAC receive a LowMAC Lsn, Lsn = %d\n", package->Lsn);
 
-#if 0		
+#if 1		
 		/* 检验收到的LSN是否正确 */
 		if(package->Lsn == LSN)    
 		{
 			LSN++;
-			if(LSN == 16)   /* LSN之前的数据可以删掉 */
+			if(LSN >= 16)   /* LSN之前的数据可以删掉 */
 				LSN = 0;
 		}
 		else
+		{
 			EPT(stderr, "hm_lm2nl_thread: HighMAC receive a wrong lm LSN, LSN = %d\n", package->Lsn);
+
+			/* LSN出错修改 1.24 */
+			LSN = package->Lsn+1;
+			if(LSN >= 16)   /* LSN之前的数据可以删掉 */
+				LSN = 0;
+		}
 #endif
 
 		/* 分类处理 */		

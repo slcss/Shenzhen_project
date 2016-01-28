@@ -81,7 +81,7 @@
 #define MAX_FSLS_PCF		8			/* fixed slot number of a complex frame */
 #define MAX_DSLS_PCF		(MAX_SLTS_PCF - MAX_FSLS_PCF - 1)
 										/* dynamic slot number of a complex frame */
-#define MAX_CFS_PSF		30			/* complex frames per super frame */
+#define MAX_CFS_PSF		32			/* complex frames per super frame */
 #define CF_SBS_SPT			0
 #define CF_FLT_SPT			(CF_SBS_SPT + 1)
 #define CF_DLT_SPT			(CF_FLT_SPT + 1)
