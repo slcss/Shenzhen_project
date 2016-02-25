@@ -500,7 +500,7 @@ void *hm_sendto_lm_thread(void *arg)
 			memcpy(snd_buf, &package, snd_len);
 			hm_sendto_McBSP(snd_buf, 512);
 
-			EPT(stderr, "hm_sendto_lm_thread: q05 send1\n");
+			//EPT(stderr, "hm_sendto_lm_thread: q05 send1\n");
 			continue;
 		}
 
@@ -517,7 +517,7 @@ void *hm_sendto_lm_thread(void *arg)
 			memcpy(snd_buf, &package, snd_len);
 			hm_sendto_McBSP(snd_buf, 512);
 			
-			EPT(stderr, "hm_sendto_lm_thread: q05 send2\n");
+			//EPT(stderr, "hm_sendto_lm_thread: q05 send2\n");
 			continue;
 		}
 

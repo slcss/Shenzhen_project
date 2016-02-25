@@ -75,7 +75,7 @@ void* nl_qrv_thread(void *arg)		  //参数为接收线程id
 	mmsg_t rcv_msg;						  //该对象用于消息队列数据的直接存储，只需要一个rcvbuff
 	while(1)
 	{
-	    printf("===========nl_layer waiting for data from nl_layer==========\n");
+	//    printf("===========nl_layer waiting for data from nl_layer==========\n");
 		memset(&rcv_msg, 0, sizeof(rcv_msg));								//接收缓存每次使用前清空，因为只有这一个接收缓存
 		rcnt = msgrcv(qid, &rcv_msg, sizeof(mmsg_t) - sizeof(long), 0, 0);	//成功返回拷贝到结构体数据部分的字节数,失败返回-1
 		if (rcnt < 0)
@@ -100,10 +100,11 @@ void* nl_qrv_thread(void *arg)		  //参数为接收线程id
 			rval = 2;
 			goto thread_return;
 		}
-		EPT(stdout, "%s:---- reveived---- %d \n", qinfs[re_qin].pname, rcnt);
-		printf("nl_layer rcv mtype: %ld\n",rcv_msg.mtype);
-		printf("nl_layer rcv dest: %d\n",rcv_msg.node);
-
+	//	EPT(stdout, "%s:---- reveived---- %d \n", qinfs[re_qin].pname, rcnt);
+	//	printf("nl_layer rcv mtype: %ld\n",rcv_msg.mtype);
+	//	printf("nl_layer rcv dest: %d\n",rcv_msg.node);
+	
+		EPT(stderr, "###rcnt: %d  rcv_msg.mtype: %ld\n\n",rcnt ,rcv_msg.mtype);
 
 		if(MMSG_MP_DATA == rcv_msg.mtype)		        //如果是HMAC发来的,就进行重组处理
 		{

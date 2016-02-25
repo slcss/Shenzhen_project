@@ -197,7 +197,7 @@ typedef struct _fwt_t {
 	fwi_t	ft[MAX_NODE_CNT];
 } fwt_t;
 
-//组播网络中节点的类型，从上到下优先级递减，优先级高的类型能够覆盖优先级低的类型
+//�鲥�����нڵ�����ͣ����ϵ������ȼ��ݼ������ȼ��ߵ������ܹ��������ȼ��͵�����
 typedef enum
 {
 	LEADER = 1,
@@ -206,17 +206,17 @@ typedef enum
 	OTHER
 } node_type;
 
-//组播路由表共享内存
+//�鲥·�ɱ������ڴ�
 typedef struct maodv_i_shm
 {
-    MADR m_addr;        //组播地址
-    MADR l_addr;        //组长节点
-    int hop;     		//到组长跳数
-    node_type Ntype;    //本节点类型，MACT添加的设为ROUTE ，GRPH添加的设为OTHER。
-						//说明，节点收到RREP时不添加路由表项，收到MACT才添加，MACT携带路径
-    MADR up_node;       //上游节点
-    int low_num;		//下游节点总数
-	MADR low_node[MAX_NODE_CNT];	//下游节点
+    MADR m_addr;        //�鲥��ַ
+    MADR l_addr;        //�鳤�ڵ�
+    int hop;     		//���鳤����
+    node_type Ntype;    //���ڵ����ͣ�MACT���ӵ���ΪROUTE ��GRPH���ӵ���ΪOTHER��
+						//˵�����ڵ��յ�RREPʱ������·�ɱ���յ�MACT�����ӣ�MACTЯ��·��
+    MADR up_node;       //���νڵ�
+    int low_num;		//���νڵ�����
+	MADR low_node[MAX_NODE_CNT];	//���νڵ�
 
 }m_item_shm;
 

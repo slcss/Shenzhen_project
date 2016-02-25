@@ -2,7 +2,7 @@
 
 static U8 seq = 0;
 //只需要数据类型和目的地址就能生成完整的帧头
-void init_package_head(nl_package_t* pkt,U8 mtype,MADR mdest)
+void init_package_head(nl_package_t* pkt,U16 mtype,MADR mdest)
 {
 	U8 PR = 0;						//协议版本，当前为0
 	U8 TYPE = 0;
@@ -14,13 +14,13 @@ void init_package_head(nl_package_t* pkt,U8 mtype,MADR mdest)
 	type = mtype;
 	if (type == MMSG_RPM)
 	{
-        	cos = 0;
+        cos = 0;
 		TYPE = 0;
 		SubT = 0;
 	}
 	else if(type == MMSG_IP_DATA)
 	{
-	    	cos = 3;
+	    cos = 3;
 		TYPE = 0;
 		SubT = 1;
 	}
@@ -197,22 +197,22 @@ inline U8 get_CRC(nl_package_t *pkt)
 }
 
 
-inline void set_data_type(nl_package_t *pkt,U8 data_type)
+inline void set_data_type(nl_package_t *pkt,U16 data_type)
 {
-	((mmhd_t*)&pkt->data)->type = data_type;
+	((mmhd_t*)pkt->data)->type = data_type;
 }
 
 inline U16 get_data_type(nl_package_t *pkt)
 {
-	return ((mmhd_t*)&pkt->data)->type;
+	return ((mmhd_t*)pkt->data)->type;
 }
 
 inline void set_data_length(nl_package_t *pkt,U16 data_length)
 {
-	((mmhd_t*)&pkt->data)->len = data_length;
+	((mmhd_t*)pkt->data)->len = data_length;
 }
 
 inline U16 get_data_length(nl_package_t *pkt)
 {
-	return ((mmhd_t*)&pkt->data)->len;
+	return ((mmhd_t*)pkt->data)->len;
 }

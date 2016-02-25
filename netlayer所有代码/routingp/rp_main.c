@@ -27,7 +27,7 @@ MADR		*sa = &rt.self;
 static int		ft_sid = -1;
 
 static fwt_t *pft = NULL;
-//è¯¥æ•°ç»„ç”¨äºå‘é€ç®€åŒ–ç‰ˆçš„è½¬å‘è¡¨
+//¸ÃÊı×éÓÃÓÚ·¢ËÍ¼ò»¯°æµÄ×ª·¢±í
 char fwt_send[MAX_NODE_CNT];
 
 int main(int argc, char* argv[])
@@ -117,7 +117,7 @@ int main(int argc, char* argv[])
 
     pft = (fwt_t *)shmaddr;
 	memset(pft,0,sizeof(pft));
-	//åˆå§‹åŒ–è½¬å‘è¡¨
+	//³õÊ¼»¯×ª·¢±í
 	pft->self = j;
     int i;
     for(i = 0; i < MAX_NODE_CNT; i++)
@@ -141,7 +141,7 @@ int main(int argc, char* argv[])
 		goto process_return;
 	}
 
-	//æ¥å—å¤–éƒ¨ä¿¡å·æ‰“å°è·¯ç”±è¡¨
+	//½ÓÊÜÍâ²¿ĞÅºÅ´òÓ¡Â·ÓÉ±í
 	signal(SIGUSR1, signal_show);
 
 	stop = 0;
@@ -234,8 +234,8 @@ thread_return:
 	sleep(1);
 	pthread_exit((void *)&rval);
 }
-//æ”¶åˆ°æ•°æ®åè°ƒç”¨è¯¥å‡½æ•°,è§£ææ¶ˆæ¯é˜Ÿåˆ—dataéƒ¨åˆ†çš„å¤´éƒ¨
-//è¿™é‡Œçš„lenæ˜¯æ¶ˆæ¯é˜Ÿåˆ—dataéƒ¨åˆ†é•¿åº¦ï¼Œç¬¬ä¸‰ä¸ªå‚æ•°æ˜¯dataéƒ¨åˆ†èµ·å§‹åœ°å€
+//ÊÕµ½Êı¾İºóµ÷ÓÃ¸Ãº¯Êı,½âÎöÏûÏ¢¶ÓÁĞdata²¿·ÖµÄÍ·²¿
+//ÕâÀïµÄlenÊÇÏûÏ¢¶ÓÁĞdata²¿·Ö³¤¶È£¬µÚÈı¸ö²ÎÊıÊÇdata²¿·ÖÆğÊ¼µØÖ·
 int rp_rpm_proc(MADR node, int len, void *data)
 {
 	mmhd_t *pmhd;
@@ -251,7 +251,7 @@ int rp_rpm_proc(MADR node, int len, void *data)
 		case RPM_FHR_SOP:
 		case RPM_FHR_RII:
 		case RPM_FHR_RIR:
-            //ä»¥ä¸Šä¸‰ç§ç±»å‹éƒ½ä¼šè°ƒç”¨ä¸‹é¢å‡½æ•°ï¼Œå› ä¸ºæ²¡æœ‰break
+            //ÒÔÉÏÈıÖÖÀàĞÍ¶¼»áµ÷ÓÃÏÂÃæº¯Êı£¬ÒòÎªÃ»ÓĞbreak
 			rp_fhrmsg_disp(node, pmhd->type, pmhd->len, data + pos);
 			break;
 
@@ -263,7 +263,7 @@ int rp_rpm_proc(MADR node, int len, void *data)
 
 	return 0;
 }
-//è·¯ç”±è·¯å¾„æ¸…é›¶ï¼ŒçŠ¶æ€ç½®ä¸ºIS_NULL
+//Â·ÓÉÂ·¾¶ÇåÁã£¬×´Ì¬ÖÃÎªIS_NULL
 void rpath_clear(rpath_t *prp)
 {
 	prp->hop = 0;
@@ -271,8 +271,8 @@ void rpath_clear(rpath_t *prp)
 	prp->status = IS_NULL;
 	prp->flag = 0;
 }
-//åˆ·æ–°å¹¶ä¸”å‘é€è½¬å‘è¡¨
-//åˆ†åˆ«å†æ”¶åˆ°sopåŒ…å’Œè®¡æ—¶å™¨å‘¨æœŸæ€§æ£€æŸ¥è·¯ç”±æ—¶è°ƒç”¨
+//Ë¢ĞÂ²¢ÇÒ·¢ËÍ×ª·¢±í
+//·Ö±ğÔÙÊÕµ½sop°üºÍ¼ÆÊ±Æ÷ÖÜÆÚĞÔ¼ì²éÂ·ÓÉÊ±µ÷ÓÃ
 void update_fwt()
 {
     int change = 0;
@@ -282,7 +282,7 @@ void update_fwt()
         if(pft->ft[i].fnd != rt.item[i].pfst.node[0])
         {
             pft->ft[i].fnd = rt.item[i].pfst.node[0];
-            //ç®€åŒ–ç‰ˆçš„è½¬å‘è¡¨ï¼Œç›®çš„åœ°å€æ˜¯i+1ï¼Œä¸‹ä¸€è·³åœ°å€æ˜¯å³å€¼
+            //¼ò»¯°æµÄ×ª·¢±í£¬Ä¿µÄµØÖ·ÊÇi+1£¬ÏÂÒ»ÌøµØÖ·ÊÇÓÒÖµ
             fwt_send[i] = rt.item[i].pfst.node[0];
             change =1;
         }
@@ -292,14 +292,14 @@ void update_fwt()
             change =1;
         }
     }
-    //printf("check fwt!!!,length of pft is %zuï¼Œlengthof fwt_send is %zu\n",sizeof(pft->ft),sizeof(fwt_send));
+    //printf("check fwt!!!,length of pft is %zu£¬lengthof fwt_send is %zu\n",sizeof(pft->ft),sizeof(fwt_send));
 
     if(1 == change)
     {
         mmsg_t msg_fwt;
-        //æ¶ˆæ¯é˜Ÿåˆ—ç±»å‹ä¸ºè½¬å‘è¡¨æ•°æ®
+        //ÏûÏ¢¶ÓÁĞÀàĞÍÎª×ª·¢±íÊı¾İ
         msg_fwt.mtype = MMSG_FT_DATA;
-        //èŠ‚ç‚¹å·è®¾ç½®ä¸ºæœ¬èŠ‚ç‚¹ï¼Œå› ä¸ºå€¼é€šçŸ¥æœ¬åœ°çš„è¿›ç¨‹ï¼Œä¸è®¸è¦è®¾ç½®ç›®çš„èŠ‚ç‚¹
+        //½ÚµãºÅÉèÖÃÎª±¾½Úµã£¬ÒòÎªÖµÍ¨Öª±¾µØµÄ½ø³Ì£¬²»ĞíÒªÉèÖÃÄ¿µÄ½Úµã
         msg_fwt.node = pft->self;
         //memcpy(msg_fwt.data,pft->ft,sizeof(pft->ft));
         //rp_tmsg_2nl(sizeof(pft->ft) + sizeof(MADR), &msg_fwt);
@@ -323,7 +323,7 @@ void rpath_copy(rpath_t* dest, rpath_t* src)
 	memset(dest->node, 0, sizeof(dest->node));
 	memcpy(dest->node, src->node, src->hop*sizeof(MADR));
 }
-//ä¸ºä¸€æ¡è·¯ç”±è·¯å¾„èµ‹å€¼ç¬¬ä¸‰ä¸ªå‚æ•°æ˜¯è·¯å¾„ç»è¿‡èŠ‚ç‚¹æ•°ç»„çš„åœ°å€
+//ÎªÒ»ÌõÂ·ÓÉÂ·¾¶¸³ÖµµÚÈı¸ö²ÎÊıÊÇÂ·¾¶¾­¹ı½ÚµãÊı×éµÄµØÖ·
 void rpath_set(rpath_t* path, int hop, MADR* pn, istat_t status, int flag)
 {
 	path->hop = hop;
@@ -346,11 +346,11 @@ int rp_init(int myaddr)
 }
 
 //route to neighbour node
-//èµ‹å€¼ä¸€æ¡åˆ°srcçš„è·¯ç”±å¹¶ä¸åŸæ¥åˆ°èŠ‚ç‚¹srcçš„è·¯ç”±æ¯”è¾ƒï¼Œè‹¥æ›´ä¼˜åˆ™æ›´æ–°ä¹‹
+//¸³ÖµÒ»Ìõµ½srcµÄÂ·ÓÉ²¢ÓëÔ­À´µ½½ÚµãsrcµÄÂ·ÓÉ±È½Ï£¬Èô¸üÓÅÔò¸üĞÂÖ®
 void ritem_nup(MADR src, U8* pn, int hop)
 {
 	int id = MR_AD2IN(src);
-	//æŒ‡é’ˆå˜é‡nlï¼Œé‚»æ¥ç‚¹è¡¨ä¸­çš„ä¸€æ¡é“¾è·¯
+	//Ö¸Õë±äÁ¿nl£¬ÁÚ½Óµã±íÖĞµÄÒ»ÌõÁ´Â·
 	rlink_t *nl = &nt.fl[id];
 
 	ASSERT(NULL == pn && hop == 0);
@@ -358,7 +358,7 @@ void ritem_nup(MADR src, U8* pn, int hop)
 
 	int sn;
 	rpath_t path;
-	//ä¸ºåˆ°é‚»æ¥ç‚¹srcçš„è·¯ç”±é¡¹pathèµ‹å€¼ï¼Œhop=1ï¼Œä¸‹ä¸€è·³èŠ‚ç‚¹æ˜¯srcï¼ŒçŠ¶æ€æ˜¯nl->lstatusï¼Œflag=1ï¼ˆæ”¶åˆ°åŒ…ï¼‰
+	//Îªµ½ÁÚ½ÓµãsrcµÄÂ·ÓÉÏîpath¸³Öµ£¬hop=1£¬ÏÂÒ»Ìø½ÚµãÊÇsrc£¬×´Ì¬ÊÇnl->lstatus£¬flag=1£¨ÊÕµ½°ü£©
 	rpath_set(&path, 1, &src, nl->lstatus, 1);
 	ritem_t *ri = &rt.item[id];
 #if 0
@@ -367,10 +367,10 @@ void ritem_nup(MADR src, U8* pn, int hop)
 	rpath_show(ri->dest, &ri->pfst);
 	rpath_show(ri->dest, &ri->psnd);
 #endif
-    //rpath_upå‡½æ•°æ¯”è¾ƒå’Œæ›´æ–°åˆ°destçš„ä¸¤æ¡è·¯å¾„ï¼Œè¿”å›å€¼ä¸º0è¯´æ˜pathæ›´ä¼˜ï¼Œri->pfstè¢«pathæ›¿æ¢
+    //rpath_upº¯Êı±È½ÏºÍ¸üĞÂµ½destµÄÁ½ÌõÂ·¾¶£¬·µ»ØÖµÎª0ËµÃ÷path¸üÓÅ£¬ri->pfst±»pathÌæ»»
 	if (0 == rpath_up(ri->dest, &path, &ri->pfst, &sn))
 	{
-	    //sn=0è¯´æ˜ä¸¤æ¡è·¯å¾„ä¸‹ä¸€è·³èŠ‚ç‚¹ä¸åŒ
+	    //sn=0ËµÃ÷Á½ÌõÂ·¾¶ÏÂÒ»Ìø½Úµã²»Í¬
 		if (0 == sn)
 		{
 #if 1
@@ -421,18 +421,18 @@ void ritem_up(ritem_t *ri, MADR src, U8 hop, MADR* pn)
 		}
 	}
 
-	//ä¸‹ä¸€è·³åœ°å€æˆ–è€…ç›®çš„åœ°å€æ˜¯è‡ªå·±ï¼Œåˆ™å¿½ç•¥ï¼Œä¸æ›´æ–°
+	//ÏÂÒ»ÌøµØÖ·»òÕßÄ¿µÄµØÖ·ÊÇ×Ô¼º£¬ÔòºöÂÔ£¬²»¸üĞÂ
 	if (pn[0] == *sa || ri->dest == *sa)
 		return;
 
 	/* loop in path */
-	//è‹¥æœ¬èŠ‚ç‚¹saæ˜¯è·¯å¾„pnä¸ŠèŠ‚ç‚¹ï¼Œåˆ™è¯´æ˜æ›´æ–°åä¼šå­˜åœ¨ç¯è·¯ï¼Œç›´æ¥è¿”å›
+	//Èô±¾½ÚµãsaÊÇÂ·¾¶pnÉÏ½Úµã£¬ÔòËµÃ÷¸üĞÂºó»á´æÔÚ»·Â·£¬Ö±½Ó·µ»Ø
 	if (0 != rpath_cklp(*sa, hop, pn))
 	{
 		EPT(stderr, "node[%d]: find loop, dest=%d, src=%d, hop=%d, next=%d\n", *sa, ri->dest, src, hop, pn[0]);
 		return;
 	}
-    //ç”¨sopåŒ…æºå¸¦çš„itemåˆå§‹åŒ–ä¸€ä¸ªpathå˜é‡
+    //ÓÃsop°üĞ¯´øµÄitem³õÊ¼»¯Ò»¸öpath±äÁ¿
 	rpath_t path;
 	int sn;
 	path.node[0] = src;
@@ -440,10 +440,10 @@ void ritem_up(ritem_t *ri, MADR src, U8 hop, MADR* pn)
 	path.hop = hop + 1;
 	path.status = (LQ_ACTIVE == nt.fl[MR_AD2IN(src)].lstatus)? IS_ACTIVE : IS_UNSTABLE;
 	path.flag = 1;
-    //æ¯”è¾ƒpathå’Œpfstï¼Œè‹¥pathè·¯å¾„æ›´ä¼˜ï¼Œåˆ™å°†ri-->pfstå˜æ›´ä¸ºpath
+    //±È½ÏpathºÍpfst£¬ÈôpathÂ·¾¶¸üÓÅ£¬Ôò½«ri-->pfst±ä¸üÎªpath
 	if (0 == rpath_up(ri->dest, &path, &ri->pfst, &sn))
 	{
-	    //è‹¥ä¸‹ä¸€è·³èŠ‚ç‚¹ä¸åŒ
+	    //ÈôÏÂÒ»Ìø½Úµã²»Í¬
 		if (0 == sn)
 		{
 #if 1
@@ -456,7 +456,7 @@ void ritem_up(ritem_t *ri, MADR src, U8 hop, MADR* pn)
 			}
 		}
 	}
-	//è‹¥pathè·¯å¾„åŠ£äºå·²å­˜åœ¨ä¼˜å…ˆè·¯å¾„ï¼Œåˆ™å°†pathä¸æ¬¡çº§è·¯å¾„æ¯”è¾ƒæ›´æ–°
+	//ÈôpathÂ·¾¶ÁÓÓÚÒÑ´æÔÚÓÅÏÈÂ·¾¶£¬Ôò½«pathÓë´Î¼¶Â·¾¶±È½Ï¸üĞÂ
 	else
 	{
 		if (0 == sn)
@@ -465,8 +465,8 @@ void ritem_up(ritem_t *ri, MADR src, U8 hop, MADR* pn)
 
 }
 
-//ç¬¬ä¸€ä¸ªå‚æ•°æ˜¯è·¯ç”±itemï¼Œç¬¬äºŒä¸ªå‚æ•°æ˜¯æºå¸¦æ­¤itemçš„é€šçŸ¥èŠ‚ç‚¹
-//å†æ”¶åˆ°sopåŒ…ï¼Œå‘ç°è¾¾åˆ°æœ€å¤§è·³æ•°æ‰è°ƒç”¨æ‰§è¡Œæ¬¡å‡½æ•°ï¼Ÿ
+//µÚÒ»¸ö²ÎÊıÊÇÂ·ÓÉitem£¬µÚ¶ş¸ö²ÎÊıÊÇĞ¯´ø´ËitemµÄÍ¨Öª½Úµã
+//ÔÙÊÕµ½sop°ü£¬·¢ÏÖ´ïµ½×î´óÌøÊı²Åµ÷ÓÃÖ´ĞĞ´Îº¯Êı£¿
 void ritem_del(ritem_t *ri, MADR src)
 {
 	int sn;
@@ -475,11 +475,11 @@ void ritem_del(ritem_t *ri, MADR src)
 	EPT(stderr, "node[%d]: receive no route indication to %d from %d\n", *sa, ri->dest, src);
 	/* second path */
 	path = &ri->psnd;
-	//è·¯ç”±è·¯å¾„pathçš„çŠ¶æ€éç©ºï¼Œä¸”srcèŠ‚ç‚¹æ˜¯pathä¸Šçš„èŠ‚ç‚¹
-	//è¯´æ˜å­˜åœ¨è·¯ç”±ç¯è·¯ï¼pathæ˜¯åŸºäºsrcè§†è§’çš„ï¼Œä¸åº”è¯¥åŒ…æ‹¬srcèŠ‚ç‚¹
+	//Â·ÓÉÂ·¾¶pathµÄ×´Ì¬·Ç¿Õ£¬ÇÒsrc½ÚµãÊÇpathÉÏµÄ½Úµã
+	//ËµÃ÷´æÔÚÂ·ÓÉ»·Â·£¡pathÊÇ»ùÓÚsrcÊÓ½ÇµÄ£¬²»Ó¦¸Ã°üÀ¨src½Úµã
 	if ((IS_NULL != path->status)&&(0 != rpath_cklp(src, path->hop, path->node)))
 	{
-	    //åˆ™è·¯ç”±æ¸…é›¶ï¼Œè·¯å¾„çŠ¶æ€ç½®ä¸ºIS_NULL
+	    //ÔòÂ·ÓÉÇåÁã£¬Â·¾¶×´Ì¬ÖÃÎªIS_NULL
 		rpath_clear(path);
 	}
 
@@ -488,7 +488,7 @@ void ritem_del(ritem_t *ri, MADR src)
 	if ((IS_NULL != path->status)&&(0 != rpath_cklp(src, path->hop, path->node)))
 	{
 		rpath_clear(path);
-		//è‹¥æ­¤æ—¶å¤‡ç”¨è·¯ç”±æ²¡æœ‰æ¸…ç©ºï¼Œåˆ™å°†å¤‡ç”¨è·¯ç”±å˜æ›´ä¸ºä¼˜å…ˆè·¯ç”±
+		//Èô´ËÊ±±¸ÓÃÂ·ÓÉÃ»ÓĞÇå¿Õ£¬Ôò½«±¸ÓÃÂ·ÓÉ±ä¸üÎªÓÅÏÈÂ·ÓÉ
 		if (IS_NULL != ri->psnd.status)
 		{
 			if (2 != rpath_up(ri->dest, &ri->psnd, &ri->pfst, &sn))
@@ -517,7 +517,7 @@ int rp_tmsg_2nl(int len, mmsg_t *msg)
 	return rval;
 }
 #else
-//å‘é€sopåŒ…
+//·¢ËÍsop°ü
 int rp_tmsg_2nl(int len, mmsg_t *msg)
 {
 	int rval = 0;
@@ -538,7 +538,7 @@ int rp_tmsg_2nl(int len, mmsg_t *msg)
 
 
 //if the return value is 0, it means that this item is not filled in sop message
-//æŠŠitemå†™å…¥æ¶ˆæ¯é˜Ÿåˆ—
+//°ÑitemĞ´ÈëÏûÏ¢¶ÓÁĞ
 int ritem_sopget(ritem_t *ri, U8 *buf, int buflen)
 {
 	rpath_t *rp = &ri->pfst;
@@ -573,7 +573,7 @@ int ritem_sopget(ritem_t *ri, U8 *buf, int buflen)
 }
 
 
-//check_loop,æ£€æŸ¥srcæ˜¯å¦ä¸ºè·¯å¾„pnä¸Šçš„èŠ‚ç‚¹ï¼Œè¿”å›0ä¸æ˜¯ï¼ˆè¯´æ˜éç¯è·¯ï¼‰ï¼Œè¿”å›1æ˜¯ï¼ˆè¯´æ˜å­˜åœ¨ç¯è·¯ï¼‰
+//check_loop,¼ì²ésrcÊÇ·ñÎªÂ·¾¶pnÉÏµÄ½Úµã£¬·µ»Ø0²»ÊÇ£¨ËµÃ÷·Ç»·Â·£©£¬·µ»Ø1ÊÇ£¨ËµÃ÷´æÔÚ»·Â·£©
 int rpath_cklp(MADR src, U8 hop, MADR *pn)
 {
 	int i;
@@ -679,7 +679,7 @@ void rlink_clear(rlink_t *lk)
 
 void rlink_inc(MADR nb)
 {
-	nt.fl[MR_AD2IN(nb)].rcnt++;//é‚»å±…è¡¨å‡ºé“¾è·¯æ”¶åˆ°çš„åŒ…æ•°+1
+	nt.fl[MR_AD2IN(nb)].rcnt++;//ÁÚ¾Ó±í³öÁ´Â·ÊÕµ½µÄ°üÊı+1
 }
 
 void rlink_dec(MADR nb)
@@ -691,82 +691,82 @@ void rlink_dec(MADR nb)
  up=0, message drive, remain rcnt
  up=1, timer drive, clear rcnt
  */
-//æ ¹æ®æ”¶åˆ°çš„åŒ…æ•°è¿›è¡Œé“¾è·¯çŠ¶æ€çš„æ›´æ–°
+//¸ù¾İÊÕµ½µÄ°üÊı½øĞĞÁ´Â·×´Ì¬µÄ¸üĞÂ
 int rlink_fsm(MADR nb, int up)
 {
 	int change = 0;
-	//niæ˜¯é‚»å±…è¡¨ntä¸­åˆ°nbèŠ‚ç‚¹çš„å‡ºé“¾è·¯
+	//niÊÇÁÚ¾Ó±íntÖĞµ½nb½ÚµãµÄ³öÁ´Â·
 	rlink_t *ni = &nt.fl[MR_AD2IN(nb)];
-	//é“¾è·¯å½“å‰çŠ¶æ€è®°ä¸ºæ—§çŠ¶æ€loldï¼Œå¾…æ›´æ–°
+	//Á´Â·µ±Ç°×´Ì¬¼ÇÎª¾É×´Ì¬lold£¬´ı¸üĞÂ
 	lstat_t lold =  ni->lstatus;
 
-	//ä»¥ä¸‹æ˜¯é“¾è·¯çŠ¶æ€è½¬ç§»ï¼Œåªæ ¹æ®æ¡ä»¶rcntï¼Œå³æ”¶åˆ°åŒ…æ•°
+	//ÒÔÏÂÊÇÁ´Â·×´Ì¬×ªÒÆ£¬Ö»¸ù¾İÌõ¼şrcnt£¬¼´ÊÕµ½°üÊı
 
-	//è‹¥æ­¤æ—¶çš„æƒ…å†µä¸ºæ— é“¾è·¯
+	//Èô´ËÊ±µÄÇé¿öÎªÎŞÁ´Â·
 	if (LQ_NULL == ni->lstatus)
 	{
-	    //æ”¶åˆ°çš„é“¾è·¯åŒ…å¤§äºç­‰äº5ï¼ŒçŠ¶æ€ç”±æ— é“¾è·¯å˜ä¸ºæ´»è·ƒé“¾è·¯
+	    //ÊÕµ½µÄÁ´Â·°ü´óÓÚµÈÓÚ5£¬×´Ì¬ÓÉÎŞÁ´Â·±äÎª»îÔ¾Á´Â·
 		if (ni->rcnt >= LM_NUL2ACT) {//LM_NUL2ACT = 5
 			ni->lstatus = LQ_ACTIVE;//active link to a node
 			change = 1;
 		}
-		//æ”¶åˆ°çš„é“¾è·¯åŒ…å¤§äºç­‰äº1ï¼ŒçŠ¶æ€ç”±æ— é“¾è·¯å˜ä¸ºä¸ç¨³å®šé“¾è·¯
+		//ÊÕµ½µÄÁ´Â·°ü´óÓÚµÈÓÚ1£¬×´Ì¬ÓÉÎŞÁ´Â·±äÎª²»ÎÈ¶¨Á´Â·
 		else if (ni->rcnt >= LM_NUL2UNS) {
 			ni->lstatus = LQ_UNSTABLE;
 			change = 1;
 		}
-		//å…¶ä»–æƒ…å†µæ–­è¨€æ”¶åˆ°çš„é“¾è·¯åŒ…ä¸º0
+		//ÆäËûÇé¿ö¶ÏÑÔÊÕµ½µÄÁ´Â·°üÎª0
 		else {
 			ASSERT(LM_NUL2NUL == ni->rcnt);
 		}
 	}
-	//è‹¥æ­¤æ—¶æƒ…å†µä¸ºå·²ç»å­˜åœ¨æ´»è·ƒé“¾è·¯
+	//Èô´ËÊ±Çé¿öÎªÒÑ¾­´æÔÚ»îÔ¾Á´Â·
 	else if (LQ_ACTIVE == ni->lstatus) {
-	    //è‹¥æ”¶åˆ°çš„é“¾è·¯åŒ…å°äºç­‰äº0ï¼Œé“¾è·¯çŠ¶æ€ç”±æ´»è·ƒå˜ä¸ºè¶…æ—¶
+	    //ÈôÊÕµ½µÄÁ´Â·°üĞ¡ÓÚµÈÓÚ0£¬Á´Â·×´Ì¬ÓÉ»îÔ¾±äÎª³¬Ê±
 		if (ni->rcnt <= LM_ACT2EXP) {
 			ni->lstatus = LQ_EXPIRE;
 			change = 1;
 		}
-		//è‹¥æ”¶åˆ°çš„é“¾è·¯åŒ…å°äº4ï¼Œåˆ™é“¾è·¯çŠ¶æ€ç”±æ´»è·ƒå˜ä¸ºä¸ç¨³å®š
+		//ÈôÊÕµ½µÄÁ´Â·°üĞ¡ÓÚ4£¬ÔòÁ´Â·×´Ì¬ÓÉ»îÔ¾±äÎª²»ÎÈ¶¨
 		else if (ni->rcnt < LM_ACT2ACT) {
 			ni->lstatus = LQ_UNSTABLE;
 			change = 1;
 		}
-		//å…¶ä»–æƒ…å†µæ–­è¨€æ”¶åˆ°çš„é“¾è·¯åŒ…å¤§äºç­‰äº4
+		//ÆäËûÇé¿ö¶ÏÑÔÊÕµ½µÄÁ´Â·°ü´óÓÚµÈÓÚ4
 		else {
 			ASSERT(LM_ACT2ACT <= ni->rcnt);
 		}
 	}
-	//è‹¥æ­¤æ—¶çš„æƒ…å†µä¸ºé“¾è·¯ä¸ç¨³å®š
+	//Èô´ËÊ±µÄÇé¿öÎªÁ´Â·²»ÎÈ¶¨
 	else if (LQ_UNSTABLE == ni->lstatus) {
-	    //è‹¥æ”¶åˆ°çš„é“¾è·¯åŒ…å¤§äºç­‰äº4ï¼Œåˆ™ç”±ä¸ç¨³å®šå˜ä¸ºæ´»è·ƒ
+	    //ÈôÊÕµ½µÄÁ´Â·°ü´óÓÚµÈÓÚ4£¬ÔòÓÉ²»ÎÈ¶¨±äÎª»îÔ¾
 		if (ni->rcnt >= LM_UNS2ACT) {
 			ni->lstatus = LQ_ACTIVE;
 			change = 1;
 		}
-		//è‹¥æ”¶åˆ°çš„é“¾è·¯åŒ…é™äºç­‰äº0ï¼Œåˆ™ç”±ä¸ç¨³å®šå˜ä¸ºè¶…æ—¶
+		//ÈôÊÕµ½µÄÁ´Â·°üÏŞÓÚµÈÓÚ0£¬ÔòÓÉ²»ÎÈ¶¨±äÎª³¬Ê±
 		else if (ni->rcnt <= LM_UNS2EXP) {
 			ni->lstatus = LQ_EXPIRE;
 			change = 1;
 		}
-		//å…¶ä»–æƒ…å†µæ–­è¨€å¤§äº0å°äº4
+		//ÆäËûÇé¿ö¶ÏÑÔ´óÓÚ0Ğ¡ÓÚ4
 		else {
 			ASSERT(LM_UNS2EXP < ni->rcnt && LM_UNS2ACT > ni->rcnt);
 		}
 	}
-	//è‹¥æ­¤æ—¶çš„æƒ…å†µä¸ºè¶…æ—¶
+	//Èô´ËÊ±µÄÇé¿öÎª³¬Ê±
 	else if (LQ_EXPIRE == ni->lstatus) {
-	    //è‹¥æ”¶åˆ°çš„é“¾è·¯åŒ…å¤§äºç­‰äº5ï¼Œ åˆ™ç”±è¶…æ—¶å˜ä¸ºæ´»è·ƒ
+	    //ÈôÊÕµ½µÄÁ´Â·°ü´óÓÚµÈÓÚ5£¬ ÔòÓÉ³¬Ê±±äÎª»îÔ¾
 		if (ni->rcnt >= LM_EXP2ACT) {
 			ni->lstatus = LQ_ACTIVE;
 			change = 1;
 		}
-		//è‹¥æ”¶åˆ°çš„é“¾è·¯åŒ…å¤§äºç­‰äº1ï¼Œåˆ™ç”±è¶…æ—¶å˜ä¸ºä¸ç¨³å®š
+		//ÈôÊÕµ½µÄÁ´Â·°ü´óÓÚµÈÓÚ1£¬ÔòÓÉ³¬Ê±±äÎª²»ÎÈ¶¨
 		else if (ni->rcnt >= LM_EXP2UNS) {
 			ni->lstatus = LQ_UNSTABLE;
 			change = 1;
 		}
-		//å…¶ä»–æƒ…å†µæ–­è¨€æ”¶åˆ°ä¸º0ï¼Œä¸”ä»è¶…æ—¶å˜ä¸ºæ— é“¾è·¯
+		//ÆäËûÇé¿ö¶ÏÑÔÊÕµ½Îª0£¬ÇÒ´Ó³¬Ê±±äÎªÎŞÁ´Â·
 		else {
 			ASSERT(ni->rcnt == LM_EXP2NUL);
 			ni->lstatus = LQ_NULL;
@@ -776,39 +776,39 @@ int rlink_fsm(MADR nb, int up)
 	else {
 		EPT(stderr,"rlink_fsm():error status\n");
 	}
-    //å¦‚æœåœ¨é“¾è·¯çŠ¶æ€è½¬ç§»è¿‡ç¨‹ä¸­å‘ç”Ÿäº†æ”¹å˜
+    //Èç¹ûÔÚÁ´Â·×´Ì¬×ªÒÆ¹ı³ÌÖĞ·¢ÉúÁË¸Ä±ä
 	if (1 == change)
 	{
-	    //è‹¥æ˜¯sopåŒ…å‘èµ·çš„æ›´æ–°ï¼Œä¸”æ›´æ–°åçš„çŠ¶æ€åŠ£äºåŸçŠ¶æ€ï¼ˆloldï¼‰ï¼Œåˆ™è¿˜åŸåŸçŠ¶æ€
+	    //ÈôÊÇsop°ü·¢ÆğµÄ¸üĞÂ£¬ÇÒ¸üĞÂºóµÄ×´Ì¬ÁÓÓÚÔ­×´Ì¬£¨lold£©£¬Ôò»¹Ô­Ô­×´Ì¬
 		if (0 == up && lold > ni->lstatus)
 		{
 			ni->lstatus = lold;
 			change = 0;
 		}
-		//å¦åˆ™å°†åŸçŠ¶æ€èµ‹å€¼ç»™é“¾è·¯æ—§çŠ¶æ€ï¼Œï¼ˆå½“å‰çŠ¶æ€å˜ä¸ºæ›´æ–°åçš„çŠ¶æ€ï¼‰
+		//·ñÔò½«Ô­×´Ì¬¸³Öµ¸øÁ´Â·¾É×´Ì¬£¬£¨µ±Ç°×´Ì¬±äÎª¸üĞÂºóµÄ×´Ì¬£©
 		else
 		{
 			ni->lold = lold;
 			EPT(stderr, "node[%d]: link to neighbour %d changed org=%d, now=%d , cnt=%d\n", *sa, nb, lold, ni->lstatus, ni->rcnt);
 		}
 	}
-	//å¦‚æœæ˜¯å®šæ—¶å™¨å‘èµ·çš„æ›´æ–°ï¼Œåˆ™æ”¶åˆ°åŒ…æ•°æ¸…é›¶ï¼ˆæ¯éš”6sï¼‰
+	//Èç¹ûÊÇ¶¨Ê±Æ÷·¢ÆğµÄ¸üĞÂ£¬ÔòÊÕµ½°üÊıÇåÁã£¨Ã¿¸ô6s£©
 	if (1 == up)
 		ni->rcnt = 0;
 	return change;
 }
-//æ£€æŸ¥å¹¶æ¯”è¾ƒæ›´æ–°ä¸€æ¡è·¯ç”±è¡¨
+//¼ì²é²¢±È½Ï¸üĞÂÒ»ÌõÂ·ÓÉ±í
 void ritem_fsm(ritem_t *ri, int up)
 {
 	int sn;
-    //åˆ†åˆ«æ£€æŸ¥ä¸¤æ¡è·¯ç”±è·¯å¾„çš„çŠ¶æ€ï¼Œè¿›è¡ŒçŠ¶æ€è½¬ç§»
-    //rpath_fsmè‹¥è¿”å›1è¯´æ˜çŠ¶æ€æ”¹å˜ï¼ˆåªèƒ½å˜ä¸ºæ›´ä¼˜çŠ¶æ€ï¼‰ï¼Œå¦åˆ™è¯´æ˜çŠ¶æ€ä¿æŒ
-    //åªè¦ä¸¤æ¡è·¯å¾„æœ‰ä¸€æ¡æ›´æ–°ï¼ˆè¿”å›1ï¼‰ï¼Œåˆ™æ›´æ–°å’Œå‘é€è½¬å‘è¡¨
+    //·Ö±ğ¼ì²éÁ½ÌõÂ·ÓÉÂ·¾¶µÄ×´Ì¬£¬½øĞĞ×´Ì¬×ªÒÆ
+    //rpath_fsmÈô·µ»Ø1ËµÃ÷×´Ì¬¸Ä±ä£¨Ö»ÄÜ±äÎª¸üÓÅ×´Ì¬£©£¬·ñÔòËµÃ÷×´Ì¬±£³Ö
+    //Ö»ÒªÁ½ÌõÂ·¾¶ÓĞÒ»Ìõ¸üĞÂ£¨·µ»Ø1£©£¬Ôò¸üĞÂºÍ·¢ËÍ×ª·¢±í
     //if(rpath_fsm(&ri->psnd, up) || rpath_fsm(&ri->pfst, up))
        // update_fwt(ri);
 	rpath_fsm(&ri->psnd, up);
 	rpath_fsm(&ri->pfst, up);
-    //è‹¥æ¬¡çº§è·¯å¾„æ´»è·ƒæˆ–è€…ä¸ç¨³å®š,åˆ™æ¯”è¾ƒä¼˜å…ˆé“¾è·¯å’Œæ¬¡çº§é“¾è·¯ï¼Œå†³å®šæ˜¯å¦æ›¿æ¢
+    //Èô´Î¼¶Â·¾¶»îÔ¾»òÕß²»ÎÈ¶¨,Ôò±È½ÏÓÅÏÈÁ´Â·ºÍ´Î¼¶Á´Â·£¬¾ö¶¨ÊÇ·ñÌæ»»
 	if (WH_RP_VALD(ri->psnd.status))
 	{
 		rpath_up(ri->dest, &ri->psnd, &ri->pfst, &sn);
@@ -825,8 +825,8 @@ void ritem_fsm(ritem_t *ri, int up)
 //0: equal, 1:p1 is better, 2: p2 is better
 //sn:
 //0: another next hop, 1:same next hop
-//æ¯”è¾ƒä¸¤æ¡è·¯ç”±è·¯å¾„ï¼Œå…ˆæ¯”è¾ƒçŠ¶æ€ï¼Œå†æ¯”è¾ƒè·³æ•°ï¼Œè¿”å›1è¯´æ˜p1æ›´ä¼˜ï¼Œè¿”å›2è¯´æ˜p2æ›´ä¼˜
-//è‹¥ä¸¤æ¡é“¾è·¯ä¸‹ä¸€è·³èŠ‚ç‚¹ç›¸åŒï¼Œåˆ™sn=1ï¼Œå¦åˆ™sn=0
+//±È½ÏÁ½ÌõÂ·ÓÉÂ·¾¶£¬ÏÈ±È½Ï×´Ì¬£¬ÔÙ±È½ÏÌøÊı£¬·µ»Ø1ËµÃ÷p1¸üÓÅ£¬·µ»Ø2ËµÃ÷p2¸üÓÅ
+//ÈôÁ½ÌõÁ´Â·ÏÂÒ»Ìø½ÚµãÏàÍ¬£¬Ôòsn=1£¬·ñÔòsn=0
 int	rpath_comp(rpath_t *p1, rpath_t *p2, int *sn)
 {
 	int rval;
@@ -878,28 +878,28 @@ int	rpath_comp(rpath_t *p1, rpath_t *p2, int *sn)
 //	0:		new is better(update), the original route is copied to new
 //	1:		org is better, do nothing
 //	2:      error
-//æ¯”è¾ƒä¸¤æ¡è·¯ç”±è·¯å¾„å¹¶æ›´æ–°
+//±È½ÏÁ½ÌõÂ·ÓÉÂ·¾¶²¢¸üĞÂ
 int rpath_up(MADR node, rpath_t *new_p, rpath_t *org, int *sn)
 {
 	int comp = -1;
 	int rval = 0;
 	rpath_t path;
-    //è‹¥æ¬¡çº§è·¯ç”±è·¯å¾„çš„çŠ¶æ€å¹¶éä¸ç¨³å®šæˆ–è€…æ¿€æ´»ï¼ˆèƒ½ç”¨ï¼‰ï¼Œç›´æ¥è¿”å›2ï¼Œä¸éœ€è¦è¿›è¡Œæ¯”è¾ƒ
+    //Èô´Î¼¶Â·ÓÉÂ·¾¶µÄ×´Ì¬²¢·Ç²»ÎÈ¶¨»òÕß¼¤»î£¨ÄÜÓÃ£©£¬Ö±½Ó·µ»Ø2£¬²»ĞèÒª½øĞĞ±È½Ï
 	if (!WH_RP_VALD(new_p->status))
 	{
 		EPT(stderr, "node[%d]: new route to %d must be active or unstable, s=%d\n", *sa, node, new_p->status);
 		rval = 2;
 		return rval;
 	}
-    //æ¸…æ¥špathï¼ŒçŠ¶æ€ç½®ä¸ºIS_NULL
+    //Çå³şpath£¬×´Ì¬ÖÃÎªIS_NULL
 	rpath_clear(&path);
-    //æ¯”è¾ƒä¸¤æ¡è·¯ç”±è·¯å¾„ï¼Œå…ˆæ¯”è¾ƒçŠ¶æ€ï¼Œå†æ¯”è¾ƒè·³æ•°ï¼Œè¿”å›1è¯´æ˜newæ›´ä¼˜ï¼Œè¿”å›2è¯´æ˜orgæ›´ä¼˜
-    //è‹¥ä¸¤æ¡é“¾è·¯ä¸‹ä¸€è·³èŠ‚ç‚¹ç›¸åŒï¼Œåˆ™sn=1ï¼Œå¦åˆ™sn=0
+    //±È½ÏÁ½ÌõÂ·ÓÉÂ·¾¶£¬ÏÈ±È½Ï×´Ì¬£¬ÔÙ±È½ÏÌøÊı£¬·µ»Ø1ËµÃ÷new¸üÓÅ£¬·µ»Ø2ËµÃ÷org¸üÓÅ
+    //ÈôÁ½ÌõÁ´Â·ÏÂÒ»Ìø½ÚµãÏàÍ¬£¬Ôòsn=1£¬·ñÔòsn=0
 	comp = rpath_comp(new_p, org, sn);
-    //ä¸‹ä¸€è·³èŠ‚ç‚¹ä¸åŒï¼Œå¯¹åº”åŸæ¥åˆ°èŠ‚ç‚¹nodeéä¸€è·³çš„æƒ…å†µï¼Œåˆ™é€‰æ‹©æ›´ä¼˜è·¯å¾„å’ŒçŠ¶æ€æ›´æ–°
+    //ÏÂÒ»Ìø½Úµã²»Í¬£¬¶ÔÓ¦Ô­À´µ½½Úµãnode·ÇÒ»ÌøµÄÇé¿ö£¬ÔòÑ¡Ôñ¸üÓÅÂ·¾¶ºÍ×´Ì¬¸üĞÂ
 	if (0 == *sn)
 	{
-	    //è‹¥æ›´æ–°é“¾è·¯new_pæ›´ä¼˜ï¼Œå°†æ›´æ–°é“¾è·¯å’Œä¼˜å…ˆé“¾è·¯äº¤æ¢
+	    //Èô¸üĞÂÁ´Â·new_p¸üÓÅ£¬½«¸üĞÂÁ´Â·ºÍÓÅÏÈÁ´Â·½»»»
 		if (1 == comp)
 		{
 			if (WH_RP_VALD(org->status))
@@ -910,7 +910,7 @@ int rpath_up(MADR node, rpath_t *new_p, rpath_t *org, int *sn)
 			rpath_copy(new_p, &path);
 			ASSERT(rval == 0);
 		}
-		//è‹¥ä¼˜å…ˆé“¾è·¯æ›´ä¼˜ï¼Œåˆ™è¿”å›å€¼ç½®ä¸º1ï¼Œä¸æ›´æ–°
+		//ÈôÓÅÏÈÁ´Â·¸üÓÅ£¬Ôò·µ»ØÖµÖÃÎª1£¬²»¸üĞÂ
 		else if (2 == comp)
 		{
 			rval = 1;
@@ -921,7 +921,7 @@ int rpath_up(MADR node, rpath_t *new_p, rpath_t *org, int *sn)
 			/* another route to dest with equal hops */
 		}
 	}
-	//è‹¥ä¸‹ä¸€è·³èŠ‚ç‚¹ç›¸åŒï¼Œå¯¹åº”åŸæ¥ä¹Ÿæ˜¯ä¸€è·³ï¼Œåˆ™æ›´æ–°é“¾è·¯ç›´æ¥å˜æ›´ä¸ºä¼˜å…ˆé“¾è·¯ï¼Œç›¸å½“ä¸æ›´æ–°è·¯å¾„çŠ¶æ€
+	//ÈôÏÂÒ»Ìø½ÚµãÏàÍ¬£¬¶ÔÓ¦Ô­À´Ò²ÊÇÒ»Ìø£¬Ôò¸üĞÂÁ´Â·Ö±½Ó±ä¸üÎªÓÅÏÈÁ´Â·£¬Ïàµ±Óë¸üĞÂÂ·¾¶×´Ì¬
 	else
 	{
 		new_p->flag = org->flag + 1;
@@ -932,26 +932,26 @@ int rpath_up(MADR node, rpath_t *new_p, rpath_t *org, int *sn)
 
 //up=1, timer drive, clear flag
 //up=0, message drive, remain flag
-//æ ¹æ®flagå’Œé“¾è·¯çŠ¶æ€è¿›è¡Œè·¯ç”±è·¯å¾„çŠ¶æ€çš„è½¬ç§»
-//åªèƒ½å‘æ›´ä¼˜çŠ¶æ€è½¬ç§»ï¼Œä¸èƒ½å‘æ›´å·®çŠ¶æ€è½¬ç§»
+//¸ù¾İflagºÍÁ´Â·×´Ì¬½øĞĞÂ·ÓÉÂ·¾¶×´Ì¬µÄ×ªÒÆ
+//Ö»ÄÜÏò¸üÓÅ×´Ì¬×ªÒÆ£¬²»ÄÜÏò¸ü²î×´Ì¬×ªÒÆ
 int rpath_fsm(rpath_t *rp, int up)
 {
-    //è¯¥è·¯ç”±é“¾è·¯çš„ä¸‹ä¸€è·³é‚»æ¥ç‚¹åœ°å€
+    //¸ÃÂ·ÓÉÁ´Â·µÄÏÂÒ»ÌøÁÚ½ÓµãµØÖ·
 	MADR next = rp->node[0];
-	//åˆ°è¯¥é‚»æ¥ç‚¹çš„é‚»æ¥ï¼ˆå‡ºï¼‰é“¾è·¯
+	//µ½¸ÃÁÚ½ÓµãµÄÁÚ½Ó£¨³ö£©Á´Â·
 	rlink_t *lk = &nt.fl[MR_AD2IN(next)];
-	//æ—§çš„è·¯ç”±è·¯å¾„çŠ¶æ€
+	//¾ÉµÄÂ·ÓÉÂ·¾¶×´Ì¬
 	istat_t iold = rp->status;
-    //è‹¥è·¯ç”±è·¯å¾„çŠ¶æ€ä¸ºç©º
+    //ÈôÂ·ÓÉÂ·¾¶×´Ì¬Îª¿Õ
 	if (IS_NULL == rp->status)
 	{
-	    //è‹¥è¯¥è·¯å¾„flagå¤§äºç­‰äº1ï¼Œå³æ”¶åˆ°äº†sopåŒ…
+	    //Èô¸ÃÂ·¾¶flag´óÓÚµÈÓÚ1£¬¼´ÊÕµ½ÁËsop°ü
 		if (rp->flag >= IM_NUL2ACT)
 		{
-		    //è‹¥ç›¸åº”çš„é‚»æ¥é“¾è·¯çŠ¶æ€ä¸ºæ´»è·ƒï¼Œåˆ™å°†è¿™æ¡è·¯ç”±è·¯å¾„çŠ¶æ€ç½®ä¸ºæ´»è·ƒ
+		    //ÈôÏàÓ¦µÄÁÚ½ÓÁ´Â·×´Ì¬Îª»îÔ¾£¬Ôò½«ÕâÌõÂ·ÓÉÂ·¾¶×´Ì¬ÖÃÎª»îÔ¾
 			if (LQ_ACTIVE == lk->lstatus)
 				rp->status = IS_ACTIVE;
-            //è‹¥ç›¸åº”çš„é‚»æ¥é“¾è·¯çŠ¶æ€ä¸ºä¸ç¨³å®šï¼Œåˆ™å°†è¿™æ¡è·¯ç”±è·¯å¾„çŠ¶æ€ç½®ä¸ºä¸ç¨³å®š
+            //ÈôÏàÓ¦µÄÁÚ½ÓÁ´Â·×´Ì¬Îª²»ÎÈ¶¨£¬Ôò½«ÕâÌõÂ·ÓÉÂ·¾¶×´Ì¬ÖÃÎª²»ÎÈ¶¨
 			else
 			{
 				ASSERT(lk->lstatus == LQ_UNSTABLE);
@@ -959,7 +959,7 @@ int rpath_fsm(rpath_t *rp, int up)
 			}
 		}
 	}
-	//è‹¥è·¯ç”±è·¯å¾„çŠ¶æ€ä¸ºè¶…æ—¶ï¼Œå¦‚æœæ”¶åˆ°äº†sopåŒ…ï¼Œåˆ™åŒä¸Šå¤„ç†ï¼Œå¦åˆ™å°†è·¯å¾„çŠ¶æ€ç½®ä¸ºç©º
+	//ÈôÂ·ÓÉÂ·¾¶×´Ì¬Îª³¬Ê±£¬Èç¹ûÊÕµ½ÁËsop°ü£¬ÔòÍ¬ÉÏ´¦Àí£¬·ñÔò½«Â·¾¶×´Ì¬ÖÃÎª¿Õ
 	else if (IS_EXPIRE == rp->status)
 	{
 		if (rp->flag >= IM_EXP2ACT)
@@ -976,30 +976,30 @@ int rpath_fsm(rpath_t *rp, int up)
 			rp->status = IS_NULL;
 		}
 	}
-	//è‹¥è·¯å¾„çŠ¶æ€ä¸ºä¸ç¨³å®š
+	//ÈôÂ·¾¶×´Ì¬Îª²»ÎÈ¶¨
 	else if (IS_UNSTABLE == rp->status)
 	{
-	    //å¦‚æœæ²¡æœ‰æ”¶åˆ°sopåŒ…ï¼Œåˆ™å°†è·¯å¾„çŠ¶æ€ç½®ä¸ºè¶…æ—¶
+	    //Èç¹ûÃ»ÓĞÊÕµ½sop°ü£¬Ôò½«Â·¾¶×´Ì¬ÖÃÎª³¬Ê±
 		if (rp->flag < IM_ACT2EXP)
 		{
 			rp->status = IS_EXPIRE;
 		}
-		//è‹¥ç›¸åº”çš„é‚»æ¥é“¾è·¯çŠ¶æ€ä¸ºæ´»è·ƒï¼Œåˆ™å°†è¿™æ¡è·¯ç”±è·¯å¾„çŠ¶æ€ç½®ä¸ºæ´»è·ƒ
+		//ÈôÏàÓ¦µÄÁÚ½ÓÁ´Â·×´Ì¬Îª»îÔ¾£¬Ôò½«ÕâÌõÂ·ÓÉÂ·¾¶×´Ì¬ÖÃÎª»îÔ¾
 		else if (LQ_ACTIVE == lk->lstatus)
 		{
 			rp->status = IS_ACTIVE;
 		}
 	}
-	//å…¶ä»–æƒ…å†µï¼ˆæ–­è¨€è·¯å¾„çŠ¶æ€æ´»è·ƒï¼‰
+	//ÆäËûÇé¿ö£¨¶ÏÑÔÂ·¾¶×´Ì¬»îÔ¾£©
 	else
 	{
 		ASSERT(rp->status == IS_ACTIVE);
-		//å¦‚æœæ²¡æœ‰æ”¶åˆ°sopåŒ…ï¼Œåˆ™ç½®ä¸ºè¶…æ—¶
+		//Èç¹ûÃ»ÓĞÊÕµ½sop°ü£¬ÔòÖÃÎª³¬Ê±
 		if (rp->flag < IM_ACT2EXP)
 		{
 			rp->status = IS_EXPIRE;
 		}
-		//è‹¥æ”¶åˆ°sopåŒ…ï¼Œä½†é“¾è·¯çŠ¶æ€ä¸ºä¸ç¨³å®šï¼Œåˆ™å°†è·¯å¾„çŠ¶æ€ç½®ä¸ºä¸ç¨³å®š
+		//ÈôÊÕµ½sop°ü£¬µ«Á´Â·×´Ì¬Îª²»ÎÈ¶¨£¬Ôò½«Â·¾¶×´Ì¬ÖÃÎª²»ÎÈ¶¨
 		else if (LQ_UNSTABLE== lk->lstatus)
 		{
 			rp->status = IS_UNSTABLE;
@@ -1009,15 +1009,15 @@ int rpath_fsm(rpath_t *rp, int up)
 	int change = 0;
 	if (iold != rp->status)
 	{
-	    //è‹¥æ—§çŠ¶æ€ä¼˜äºæ–°çŠ¶æ€ä¸”æœ¬æ¬¡æ›´æ–°æ˜¯msgæ›´æ–°çš„ï¼ˆétimeræ›´æ–°ï¼‰ï¼Œåˆ™ä¿æŒæ—§çŠ¶æ€
-	    //æ¯”å¦‚ï¼ŒsopåŒ…å‘èµ·checkï¼ˆup=0ï¼‰ï¼Œä½†æ˜¯æ–°çš„çŠ¶æ€å·®äºæ—§çŠ¶æ€ï¼Œåˆ™ä¸æ›´æ–°
+	    //Èô¾É×´Ì¬ÓÅÓÚĞÂ×´Ì¬ÇÒ±¾´Î¸üĞÂÊÇmsg¸üĞÂµÄ£¨·Çtimer¸üĞÂ£©£¬Ôò±£³Ö¾É×´Ì¬
+	    //±ÈÈç£¬sop°ü·¢Æğcheck£¨up=0£©£¬µ«ÊÇĞÂµÄ×´Ì¬²îÓÚ¾É×´Ì¬£¬Ôò²»¸üĞÂ
 		if (iold > rp->status && 0 == up)
 			rp->status = iold;
-		//å¦åˆ™æœ€ç»ˆç¡®å®šæ›´æ–°çŠ¶æ€ï¼ˆæ–°ï¼‰ï¼Œè¿”å›change=1
+		//·ñÔò×îÖÕÈ·¶¨¸üĞÂ×´Ì¬£¨ĞÂ£©£¬·µ»Øchange=1
 		else
 			change = 1;
 	}
-	//å¦‚æœupä¸º1ï¼Œè¯´æ˜æ˜¯timerå‘èµ·çš„æ›´æ–°ï¼Œåˆ™å°†flagç½®0ï¼Œè¡¨ç¤ºæ–°çš„checké˜¶æ®µæ²¡æœ‰æ”¶åˆ°sopåŒ…
+	//Èç¹ûupÎª1£¬ËµÃ÷ÊÇtimer·¢ÆğµÄ¸üĞÂ£¬Ôò½«flagÖÃ0£¬±íÊ¾ĞÂµÄcheck½×¶ÎÃ»ÓĞÊÕµ½sop°ü
 	if (1 == up)
 		rp->flag = 0;
 

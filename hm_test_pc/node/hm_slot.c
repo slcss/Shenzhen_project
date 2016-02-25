@@ -775,17 +775,17 @@ void *hm_slot_thread(void *arg)
 												/* 清空时隙生存期维护线程 10.30*/
 												rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_cancel error code1 %d\n", rval);
+													EPT(stderr, "CON1_4: pthread_cancel error code1 %d\n", rval);
 												rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_join error code1 %d\n", rval);							
+													EPT(stderr, "CON1_4: pthread_join error code1 %d\n", rval);							
 												
 												rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_cancel error code2 %d\n", rval);
+													EPT(stderr, "CON1_4: pthread_cancel error code2 %d\n", rval);
 												rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_join error code2 %d\n", rval);	
+													EPT(stderr, "CON1_4: pthread_join error code2 %d\n", rval);	
 												
 												sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
 											}
@@ -936,17 +936,17 @@ void *hm_slot_thread(void *arg)
 												/* 清空时隙生存期维护线程 10.30*/
 												rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_cancel error code1 %d\n", rval);
+													EPT(stderr, "CON2_1: pthread_cancel error code1 %d\n", rval);
 												rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_join error code1 %d\n", rval);							
+													EPT(stderr, "CON2_1: pthread_join error code1 %d\n", rval);							
 												
 												rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_cancel error code2 %d\n", rval);
+													EPT(stderr, "CON2_1: pthread_cancel error code2 %d\n", rval);
 												rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_join error code2 %d\n", rval);	
+													EPT(stderr, "CON2_1: pthread_join error code2 %d\n", rval);	
 												
 												sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
 											}
@@ -1592,17 +1592,17 @@ void *hm_slot_thread(void *arg)
 												/* 清空时隙生存期维护线程 10.30*/
 												rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_cancel error code1 %d\n", rval);
+													EPT(stderr, "CON3_3: pthread_cancel error code1 %d\n", rval);
 												rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_join error code1 %d\n", rval);							
+													EPT(stderr, "CON3_3: pthread_join error code1 %d\n", rval);							
 												
 												rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_cancel error code2 %d\n", rval);
+													EPT(stderr, "CON3_3: pthread_cancel error code2 %d\n", rval);
 												rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_join error code2 %d\n", rval);	
+													EPT(stderr, "CON3_3: pthread_join error code2 %d\n", rval);	
 												
 												sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
 											}
@@ -1685,17 +1685,17 @@ void *hm_slot_thread(void *arg)
 												/* 清空时隙生存期维护线程 10.30*/
 												rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_cancel error code1 %d\n", rval);
+													EPT(stderr, "CON3_4: pthread_cancel error code1 %d\n", rval);
 												rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_join error code1 %d\n", rval);							
+													EPT(stderr, "CON3_4: pthread_join error code1 %d\n", rval);							
 												
 												rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_cancel error code2 %d\n", rval);
+													EPT(stderr, "CON3_4: pthread_cancel error code2 %d\n", rval);
 												rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_join error code2 %d\n", rval);	
+													EPT(stderr, "CON3_4: pthread_join error code2 %d\n", rval);	
 												
 												sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
 											}
@@ -1716,8 +1716,7 @@ void *hm_slot_thread(void *arg)
 						}							
 					}						
 					memset(netID, 0, sizeof(netID));
-					netnum = 0;
-					
+					netnum = 0;					
 					
 					/* 解锁 */
 					pthread_rwlock_unlock(&rw_lock);					
@@ -1778,17 +1777,17 @@ void *hm_slot_thread(void *arg)
 												/* 清空时隙生存期维护线程 10.30*/
 												rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_cancel error code1 %d\n", rval);
+													EPT(stderr, "CON3_5: pthread_cancel error code1 %d\n", rval);
 												rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_join error code1 %d\n", rval);							
+													EPT(stderr, "CON3_5: pthread_join error code1 %d\n", rval);							
 												
 												rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_cancel error code2 %d\n", rval);
+													EPT(stderr, "CON3_5: pthread_cancel error code2 %d\n", rval);
 												rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
 												if(rval != 0)						
-													EPT(stderr, "CON3_10: pthread_join error code2 %d\n", rval);	
+													EPT(stderr, "CON3_5: pthread_join error code2 %d\n", rval);	
 												
 												sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
 											}
@@ -2407,17 +2406,17 @@ void *hm_slot_thread(void *arg)
 													/* 清空时隙生存期维护线程 10.30*/
 													rval = pthread_cancel(neighbor_map_manage[i]->bs_timer[bs][j]);
 													if(rval != 0)						
-														EPT(stderr, "CON3_10: pthread_cancel error code1 %d\n", rval);
+														EPT(stderr, "CON3_9: pthread_cancel error code1 %d\n", rval);
 													rval = pthread_join(neighbor_map_manage[i]->bs_timer[bs][j], &thread_result);
 													if(rval != 0)						
-														EPT(stderr, "CON3_10: pthread_join error code1 %d\n", rval);							
+														EPT(stderr, "CON3_9: pthread_join error code1 %d\n", rval);							
 													
 													rval = pthread_cancel(neighbor_map_manage[i]->bs_tid[bs][j]);
 													if(rval != 0)						
-														EPT(stderr, "CON3_10: pthread_cancel error code2 %d\n", rval);
+														EPT(stderr, "CON3_9: pthread_cancel error code2 %d\n", rval);
 													rval = pthread_join(neighbor_map_manage[i]->bs_tid[bs][j], &thread_result);
 													if(rval != 0)						
-														EPT(stderr, "CON3_10: pthread_join error code2 %d\n", rval);	
+														EPT(stderr, "CON3_9: pthread_join error code2 %d\n", rval);	
 													
 													sem_destroy(&(neighbor_map_manage[i]->bs_sem[bs][j]));
 												}
@@ -3255,7 +3254,7 @@ U8 hm_MAC_frame_rcv_proc3(lm_packet_t *cache_p, U8 net_i)
 {
 	U8	 id;		/* for	id = service_frame_p->netID*/
 	U8	 i; 		/* for	for(i=0; i<netnum; i++)   记录时隙号 */
-	U8	 net_id;   /* 记录当前网络号!!!!! */
+	U8	 net_id;   /* 记录当前勤务帧所在的网络号!!!!! */
 	U8   node;     /* 记录占用某时隙的节点号 11.06 */	
 	int  res;
 	U8   net_count = 0;  /* 选择网络时计数 1.11 */
@@ -3747,7 +3746,7 @@ void *hm_bs_life_thread(void *i_p)
 	}
 	
 #ifdef _HM_TEST
-		EPT(stderr, "hm_bs_life_thread: net_i = %d BS[%d][%d] time begin\n", net_i, bs_i, node_i);
+	EPT(stderr, "hm_bs_life_thread: net_i = %d BS[%d][%d] time begin\n", net_i, bs_i, node_i);
 #endif
 
 	struct timeval tv;
@@ -3758,7 +3757,7 @@ void *hm_bs_life_thread(void *i_p)
 	//usleep(600000);
 
 #ifdef _HM_TEST
-		EPT(stderr, "hm_bs_life_thread: net_i = %d BS[%d][%d] time up\n", net_i, bs_i, node_i);
+	EPT(stderr, "hm_bs_life_thread: net_i = %d BS[%d][%d] time up\n", net_i, bs_i, node_i);
 #endif
 
 	/* 写锁 */

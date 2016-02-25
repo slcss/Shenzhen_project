@@ -25,7 +25,7 @@ int rp_qid = -1;
 int mt_qid = -1;
 
 #ifdef _MR_TEST
-void* mr_queues_init(void *arg)//鑾峰緱route杩涚▼鐨勯槦鍒梚d鍜宼est杩涚▼鐨勯槦鍒梚d
+void* mr_queues_init(void *arg)//获得route进程的队列id和test进程的队列id
 {
 	int i,j;
 	int qid, rval, stop;

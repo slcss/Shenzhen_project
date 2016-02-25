@@ -1,12 +1,12 @@
 #!/bin/bash
 inode_id=2
 
-#è°ƒè¯•é’©å­,æ‰§è¡Œexport DEBUG=trueå‘½ä»¤æ‰“å¼€è°ƒè¯•é’©å­
+#µ÷ÊÔ¹³×Ó,Ö´ĞĞexport DEBUG=trueÃüÁî´ò¿ªµ÷ÊÔ¹³×Ó
 export DEBUG=true
 DEBUG()
 {
 	if [ "$DEBUG" = "true" ]; then
-		$@ã€€ã€€
+		$@¡¡¡¡
 	fi
 }
 DEBUG echo "debug opened!!"
@@ -23,7 +23,7 @@ echo "config mac&ip of tap0.."
 ifconfig tap0 hw ether "00:11:22:33:44:$inode_id"
 ifconfig tap0 "192.168.0.$inode_id" netmask 255.255.255.0 up
 
-#ä½¿ç”¨route å‘½ä»¤æ·»åŠ çš„è·¯ç”±ï¼Œæœºå™¨é‡å¯æˆ–è€…ç½‘å¡é‡å¯åè·¯ç”±å°±å¤±æ•ˆäº†
+#Ê¹ÓÃroute ÃüÁîÌí¼ÓµÄÂ·ÓÉ£¬»úÆ÷ÖØÆô»òÕßÍø¿¨ÖØÆôºóÂ·ÓÉ¾ÍÊ§Ğ§ÁË
 echo "config arp.."
 counter=1
 while [ $counter -lt 33 ]
@@ -36,7 +36,7 @@ do
 	counter=`expr $counter + 1`
 done
 
-#æ·»åŠ åˆ°ç½‘ç»œçš„è·¯ç”±ï¼šå‘å¾€192.168.3.0ç½‘æ®µçš„æ•°æ®åŒ…å…¨éƒ¨è¦ç»è¿‡ç½‘å…³192.168.0.3
+#Ìí¼Óµ½ÍøÂçµÄÂ·ÓÉ£º·¢Íù192.168.3.0Íø¶ÎµÄÊı¾İ°üÈ«²¿Òª¾­¹ıÍø¹Ø192.168.0.3
 echo "config route.."
 counter=1
 while [ $counter -lt 33 ]

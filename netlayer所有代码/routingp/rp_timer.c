@@ -7,7 +7,7 @@ tsche_t rp_tsch = {
 	0,              //map
 	0,              //mask
 	{
-		{"sop generate", 0, RT_SOP_INTV,  rp_sop_gen},	//RT_SOP_INTV1000msï¼Œ5ä¸ªç³»ç»Ÿå®šæ—¶å™¨å‘¨æœŸè°ƒç”¨ä¸€æ¬¡rp_sop_gen
+		{"sop generate", 0, RT_SOP_INTV,  rp_sop_gen},	//RT_SOP_INTV1000ms£¬5¸öÏµÍ³¶¨Ê±Æ÷ÖÜÆÚµ÷ÓÃÒ»´Îrp_sop_gen
 		{"route expire", 0, RT_ITEM_EXPI, rp_rt_check},//RT_ITEM_EXPI 5000ms
 		{"link maintain", 0, RT_LINK_CHK, rp_lk_check} //RT_LINK_CHK 5000ms
 		//name,wait,period,function
@@ -15,7 +15,7 @@ tsche_t rp_tsch = {
 };
 
 const int rp_tfs = sizeof(rp_tsch.procs)/sizeof(rp_tsch.procs[0]);//numbers of timer
-//itimervalä¸Šé¢åº”è¯¥æ˜¯å®šæ—¶å™¨é—´éš”ï¼Œä¸‹é¢åº”è¯¥æ˜¯é¦–æ¬¡å¯åŠ¨çš„å»¶è¿Ÿ
+//itimervalÉÏÃæÓ¦¸ÃÊÇ¶¨Ê±Æ÷¼ä¸ô£¬ÏÂÃæÓ¦¸ÃÊÇÊ×´ÎÆô¶¯µÄÑÓ³Ù
 struct itimerval new_value = {
 {RP_TINTVL_S, RP_TINTVL_US},  //0s,200000us
 {RP_TDELAY_S, RP_TDELAY_US}   //1s,0us
@@ -28,11 +28,11 @@ extern MADR*	sa;
 void rp_tsch_init()
 {
 	int i, cnt, sopcnt = 0;;
-	tproc_t *p;//å®šæ—¶å™¨ç»“æ„ææŒ‡é’ˆï¼ŒåŒ…æ‹¬åå­—ï¼Œç­‰å¾…ï¼Œé—´éš”ï¼Œè°ƒç”¨å‡½æ•°å››ä¸ªæˆå‘˜
+	tproc_t *p;//¶¨Ê±Æ÷½á¹¹ÌáÖ¸Õë£¬°üÀ¨Ãû×Ö£¬µÈ´ı£¬¼ä¸ô£¬µ÷ÓÃº¯ÊıËÄ¸ö³ÉÔ±
 
 	ASSERT(rp_tsch.tmap == 0);
 	ASSERT(rp_tsch.tmask == 0);
-    //ç”¨æˆ·è®¾ç½®äº†rp_tfsä¸ªæ˜ å°„å®šæ—¶å™¨
+    //ÓÃ»§ÉèÖÃÁËrp_tfs¸öÓ³Éä¶¨Ê±Æ÷
 	for (i = 0; i < rp_tfs; i++)
 	{
 		p = &rp_tsch.procs[i];
@@ -43,22 +43,22 @@ void rp_tsch_init()
 		}
 
 		rp_tsch.tmap = rp_tsch.tmap|(1<<i);
-		//ç­‰å¾…cntä¸ªç³»ç»Ÿå®šæ—¶å™¨å‘¨æœŸæ¿€æ´»ä¸€æ¬¡å®šæ—¶å™¨rp_tsch.procs[i],åˆ†æ¯æ˜¯200000us
-		//å®šæ—¶å™¨çš„åˆå€¼periodå¦‚1000msï¼Œæˆ–è€…5000msç­‰å¹¶ä¸æ˜¯è¯´å…¶å‘¨æœŸæ˜¯1000msï¼Œè€Œæ˜¯è¦ç”¨è¿™ä¸ªå€¼è®¡ç®—æ¯”ä¾‹æ¬¡æ•°
-		//ç»è¿‡è¿™ä¸ªè®¡ç®—ï¼Œrp_sop_genï¼Œrp_rt_checkï¼Œrp_lk_checkçš„periodåˆ†åˆ«ä¸º1,5,5
+		//µÈ´ıcnt¸öÏµÍ³¶¨Ê±Æ÷ÖÜÆÚ¼¤»îÒ»´Î¶¨Ê±Æ÷rp_tsch.procs[i],·ÖÄ¸ÊÇ200000us
+		//¶¨Ê±Æ÷µÄ³õÖµperiodÈç1000ms£¬»òÕß5000msµÈ²¢²»ÊÇËµÆäÖÜÆÚÊÇ1000ms£¬¶øÊÇÒªÓÃÕâ¸öÖµ¼ÆËã±ÈÀı´ÎÊı
+		//¾­¹ıÕâ¸ö¼ÆËã£¬rp_sop_gen£¬rp_rt_check£¬rp_lk_checkµÄperiod·Ö±ğÎª1,5,5
 		cnt = (p->period * 1000)/RP_TINTVL_US;
 		if (cnt < 1)
 			p->period = 1;
 		else
 			p->period = cnt;
 #if 0
-        //ç¡®å®šä¸‰ä¸ªæ˜ å°„å®šæ—¶å™¨çš„è°ƒç”¨å‘¨æœŸ,#if 1 é‡Œé¢çš„å†…å®¹ä¼¼ä¹æ²¡æœ‰ç”¨åˆ°ï¼Ÿ
-        //sop generateå®šæ—¶å™¨ä¸ºæ¯ä¸€ç§’è°ƒç”¨ä¸€æ¬¡rp_sop_genå‡½æ•°ç”ŸæˆsopåŒ…
+        //È·¶¨Èı¸öÓ³Éä¶¨Ê±Æ÷µÄµ÷ÓÃÖÜÆÚ,#if 1 ÀïÃæµÄÄÚÈİËÆºõÃ»ÓĞÓÃµ½£¿
+        //sop generate¶¨Ê±Æ÷ÎªÃ¿Ò»Ãëµ÷ÓÃÒ»´Îrp_sop_genº¯ÊıÉú³Ésop°ü
 		if (1 == strcmp("sop generate", p->name))
 		{
 			sopcnt = p->period;
 		}
-		//route expireå®šæ—¶å™¨ä¸ºæ¯è‹¥å¹²æ¬¡å®šæ—¶å™¨è°ƒç”¨ä¸€æ¬¡rp_rt_checkå‡½æ•°æ£€æŸ¥è·¯ç”±
+		//route expire¶¨Ê±Æ÷ÎªÃ¿Èô¸É´Î¶¨Ê±Æ÷µ÷ÓÃÒ»´Îrp_rt_checkº¯Êı¼ì²éÂ·ÓÉ
 		else if (1 == strcmp("route expire", p->name))
 		{
 			if (0 != sopcnt)
@@ -66,7 +66,7 @@ void rp_tsch_init()
 				p->period = sopcnt*(RT_ITEM_EXPI/RT_SOP_INTV) + 1;
 			}
 		}
-		//route expireå®šæ—¶å™¨ä¸ºæ¯è‹¥å¹²æ¬¡å®šæ—¶å™¨è°ƒç”¨ä¸€æ¬¡rp_lk_checkå‡½æ•°æ£€æŸ¥é“¾è·¯
+		//route expire¶¨Ê±Æ÷ÎªÃ¿Èô¸É´Î¶¨Ê±Æ÷µ÷ÓÃÒ»´Îrp_lk_checkº¯Êı¼ì²éÁ´Â·
 		else if (1 == strcmp("link maintain", p->name))
 		{
 			if (0 != sopcnt)
@@ -78,15 +78,15 @@ void rp_tsch_init()
 		p->wait = p->period;
 	}
 }
-//è¢«mainå‡½æ•°è°ƒç”¨
+//±»mainº¯Êıµ÷ÓÃ
 int rp_start_timer()
 {
 	int rval;
 
-	rp_tsch_init();//ç¡®å®šä¸‰ä¸ªæ˜ å°„å®šæ—¶å™¨çš„è°ƒç”¨å‘¨æœŸï¼ˆåŸºäºç³»ç»Ÿå®šæ—¶å™¨ï¼‰
+	rp_tsch_init();//È·¶¨Èı¸öÓ³Éä¶¨Ê±Æ÷µÄµ÷ÓÃÖÜÆÚ£¨»ùÓÚÏµÍ³¶¨Ê±Æ÷£©
 
 	signal(SIGALRM, rp_timer_sche);//rp_timer_sche  wait for SIGALRM
-	rval = setitimer(ITIMER_REAL, &new_value, NULL);//è®¡æ—¶åˆ°è¾¾å°†å‘é€SIGVTALRMä¿¡å·ç»™è¿›ç¨‹
+	rval = setitimer(ITIMER_REAL, &new_value, NULL);//¼ÆÊ±µ½´ï½«·¢ËÍSIGVTALRMĞÅºÅ¸ø½ø³Ì
 	if (-1 == rval)	{
 		/* failure */
 		EPT(stderr, "error occurs in setting timer %d[%s]\n", errno, strerror(errno));
@@ -97,7 +97,7 @@ int rp_start_timer()
 	}
 	return rval;
 }
-//æ”¶åˆ°SIGALRMä¿¡å·ï¼Œåˆ™è°ƒç”¨è¯¥å‡½æ•°ï¼Œå³å‘¨æœŸä¸º1s
+//ÊÕµ½SIGALRMĞÅºÅ£¬Ôòµ÷ÓÃ¸Ãº¯Êı£¬¼´ÖÜÆÚÎª1s
 void rp_timer_sche(int signo)
 {
    // printf("rcv timer\n");
@@ -111,40 +111,40 @@ void rp_timer_sche(int signo)
 	}
 
 //	EPT(stderr, "Caught the SIGALRM signal\n");
-    //&ä¸è¿ç®—ï¼Œ^å¼‚æˆ–è¿ç®—
+    //&ÓëÔËËã£¬^Òì»òÔËËã
 	emap = rp_tsch.tmap&(rp_tsch.tmap^rp_tsch.tmask);
 	for (i = 0; i < rp_tfs; i++)
 	{
 		if (!((1<<i)&emap))
 			continue;
-        //waitåˆå€¼ç­‰äºperiodï¼Œæ¯ä¸€æ¬¡ç»å†ç³»ç»Ÿå®šæ—¶å™¨åˆ™waitå‡ä¸€
+        //wait³õÖµµÈÓÚperiod£¬Ã¿Ò»´Î¾­ÀúÏµÍ³¶¨Ê±Æ÷Ôòwait¼õÒ»
 		rp_tsch.procs[i].wait -= 1;
 		if (rp_tsch.procs[i].wait <= 0)
 		{
-		    //å½“waitå‡åˆ°0åˆ™é‡æ–°åˆå§‹åŒ–ä¸ºperiod
+		    //µ±wait¼õµ½0ÔòÖØĞÂ³õÊ¼»¯Îªperiod
 			rp_tsch.procs[i].wait = rp_tsch.procs[i].period;
-			//è°ƒç”¨è¯¥å®šæ—¶å™¨çš„å‡½æ•°ï¼Œå‚æ•°ä¸ºä»€ä¹ˆä¸ºiï¼Ÿ
+			//µ÷ÓÃ¸Ã¶¨Ê±Æ÷µÄº¯Êı£¬²ÎÊıÎªÊ²Ã´Îªi£¿
 			(*rp_tsch.procs[i].pf)(&i);
 		}
 	}
 }
-//æ¯æ”¶åˆ°1æ¬¡å®šæ—¶å™¨ä¿¡å·è°ƒç”¨ä¸€æ¬¡ï¼Œå³å‘¨æœŸä¸º1s
+//Ã¿ÊÕµ½1´Î¶¨Ê±Æ÷ĞÅºÅµ÷ÓÃÒ»´Î£¬¼´ÖÜÆÚÎª1s
 void rp_sop_gen(void *data)
 {
     //int id = *(int *)data;
     //EPT(stderr, "Caught the SIGALRM signal for %s\n", rp_tsch.procs[id].name);
 	int rval, i;
 	int len = 0;
-    //æ¶ˆæ¯é˜Ÿåˆ—=mtyp + node + (mmhd)pkg_headd + sop_head + true_data
+    //ÏûÏ¢¶ÓÁĞ=mtyp + node + (mmhd)pkg_headd + sop_head + true_data
 	mmsg_t tmsg;
 	mmhd_t *phd = (mmhd_t *)tmsg.data;
 	sop_hd *psh = (sop_hd *)(tmsg.data + MMHD_LEN);
-	//sop_head = node + icntå³åœ°å€åŠ æ•°é‡
+	//sop_head = node + icnt¼´µØÖ·¼ÓÊıÁ¿
 	U8 *items = &psh->icnt;
-    //è·¯ç”±åè®®æ¶ˆæ¯ç±»å‹
+    //Â·ÓÉĞ­ÒéÏûÏ¢ÀàĞÍ
 	tmsg.mtype = MMSG_RPM;
 #ifdef _MR_TEST
-    //æœ¬èŠ‚ç‚¹å·çš„åœ°å€
+    //±¾½ÚµãºÅµÄµØÖ·
 	tmsg.node = *sa;
 #else
 	tmsg.node = MADR_BRDCAST;
@@ -152,23 +152,23 @@ void rp_sop_gen(void *data)
 	/*rp message header */
 	phd->type = RPM_FHR_SOP;
 	phd->len = MMHD_LEN + sizeof(sop_hd);
-	//åŠ ä¸Šphdçš„é•¿åº¦
+	//¼ÓÉÏphdµÄ³¤¶È
 	len += MMHD_LEN;
 	/* sop header */
 	psh->node = *sa;
 	*items = 0;
-	//åŠ ä¸Špshçš„é•¿åº¦
+	//¼ÓÉÏpshµÄ³¤¶È
 	len += sizeof(sop_hd);
 //	EPT(stderr, "psh->icnt=%d\n", psh->icnt);
 	for(i = 0; i < MAX_NODE_CNT; i++)
 	{
-	    //è¿™æ˜¯ç±»ä¼¼å“ˆç³»è¡¨çš„å½¢å¼ï¼Œä¸‹æ ‡å’Œè¡¨é¡¹çš„ç›®çš„åœ°å€æ˜ å°„å¯¹åº”
+	    //ÕâÊÇÀàËÆ¹şÏµ±íµÄĞÎÊ½£¬ÏÂ±êºÍ±íÏîµÄÄ¿µÄµØÖ·Ó³Éä¶ÔÓ¦
 		ASSERT(MR_IN2AD(i) == rt.item[i].dest);
-		//åˆ°æœ¬èŠ‚ç‚¹çš„è¡¨é¡¹è·³è¿‡
+		//µ½±¾½ÚµãµÄ±íÏîÌø¹ı
 		if (MR_IN2AD(i) == *sa)
 			continue;
 		rval = 0;
-		//å°†ç›®çš„åœ°å€ï¼Œè·³æ•°ï¼Œæ¯è·³èŠ‚ç‚¹ä¸€æ¬¡å¡«å…¥tmsg.data + lenå¼€å§‹çš„åœ°å€ï¼Œè¿”å›å¡«å……é•¿åº¦ï¼Œæœ€åå‚æ•°éªŒè¯æ˜¯å¦è¶Šç•Œ
+		//½«Ä¿µÄµØÖ·£¬ÌøÊı£¬Ã¿Ìø½ÚµãÒ»´ÎÌîÈëtmsg.data + len¿ªÊ¼µÄµØÖ·£¬·µ»ØÌî³ä³¤¶È£¬×îºó²ÎÊıÑéÖ¤ÊÇ·ñÔ½½ç
 		rval = ritem_sopget(&rt.item[i], tmsg.data + len, MAX_DATA_LENGTH - len);
 		if (rval == -1)
 			EPT(stderr, "error occurs in ritem_sogget()\n");
@@ -182,12 +182,12 @@ void rp_sop_gen(void *data)
 		}
 	}
 //	EPT(stderr, "psh->icnt=%d\n", psh->icnt);
-    //å³ä»£è¡¨ä»pshåˆ°æ¶ˆæ¯æœ«å°¾çš„é•¿åº¦ï¼Œæ³¨æ„ï¼Œlenæ˜¯æ¶ˆæ¯é˜Ÿåˆ—çš„dataæ€»é•¿åº¦ï¼
+    //¼´´ú±í´Ópshµ½ÏûÏ¢Ä©Î²µÄ³¤¶È£¬×¢Òâ£¬lenÊÇÏûÏ¢¶ÓÁĞµÄdata×Ü³¤¶È£¡
 	phd->len = len - MMHD_LEN;
-	//é€šè¿‡æ¶ˆæ¯é˜Ÿåˆ—å‘å‡ºtmsgï¼Œç¬¬ä¸€ä¸ªå‚æ•°æ˜¯å‘é€é•¿åº¦
+	//Í¨¹ıÏûÏ¢¶ÓÁĞ·¢³ötmsg£¬µÚÒ»¸ö²ÎÊıÊÇ·¢ËÍ³¤¶È
 	rp_tmsg_2nl(len + sizeof(MADR), &tmsg);//msg_snd
 }
-//æ¯æ”¶åˆ°5æ¬¡å®šæ—¶å™¨ä¿¡å·è°ƒç”¨ä¸€æ¬¡ï¼Œå³å‘¨æœŸä¸º5s
+//Ã¿ÊÕµ½5´Î¶¨Ê±Æ÷ĞÅºÅµ÷ÓÃÒ»´Î£¬¼´ÖÜÆÚÎª5s
 void rp_rt_check(void *data)
 {
 	//int id = *(int *)data;
@@ -204,10 +204,10 @@ void rp_rt_check(void *data)
 
 		ritem_fsm(&rt.item[i], 1);
 	}
-	//æ£€æŸ¥å’Œæ›´æ–°è½¬å‘è¡¨
+	//¼ì²éºÍ¸üĞÂ×ª·¢±í
 	update_fwt();
 }
-//æ¯æ”¶åˆ°5æ¬¡å®šæ—¶å™¨ä¿¡å·è°ƒç”¨ä¸€æ¬¡ï¼Œå³å‘¨æœŸä¸º5s
+//Ã¿ÊÕµ½5´Î¶¨Ê±Æ÷ĞÅºÅµ÷ÓÃÒ»´Î£¬¼´ÖÜÆÚÎª5s
 void rp_lk_check(void *data)
 {
 	//int id = *(int *)data;
@@ -221,19 +221,19 @@ void rp_lk_check(void *data)
 	for (i = 0; i < MAX_NODE_CNT; i++)
 	{
 		lk = &nt.fl[i];
-		//å¦‚æœæ”¶åˆ°åŒ…æ•°ä¸º0æˆ–è€…é“¾è·¯çŠ¶æ€ä¸ºLQ_NULLåˆ™è·³è¿‡è¯¥æ¡é“¾è·¯
+		//Èç¹ûÊÕµ½°üÊıÎª0»òÕßÁ´Â·×´Ì¬ÎªLQ_NULLÔòÌø¹ı¸ÃÌõÁ´Â·
 		if (LQ_NULL == lk->lstatus && 0 == lk->rcnt) {
 			continue;
 		}
         //EPT(stderr, "node[%d]: enter to check the link to node %d\n", *sa, MR_IN2AD(i));
-		//æ ¹æ®æ”¶åˆ°çš„åŒ…æ•°rcntè¿›è¡Œé“¾è·¯çŠ¶æ€çš„è½¬ç§»ï¼Œè½¬ç§»æˆåŠŸåˆ™è¿”å›1
+		//¸ù¾İÊÕµ½µÄ°üÊırcnt½øĞĞÁ´Â·×´Ì¬µÄ×ªÒÆ£¬×ªÒÆ³É¹¦Ôò·µ»Ø1
 		change = rlink_fsm(MR_IN2AD(i), 1);
 
 		if (change == 0)
 		{
 			continue;
 		}
-        //ä¸ºä½•æ­¤å¤„æ–­è¨€ï¼Ÿ
+        //ÎªºÎ´Ë´¦¶ÏÑÔ£¿
 		ASSERT(LQ_ACTIVE != lk->lstatus);
 		nn = MR_IN2AD(i);
 		EPT(stderr, "node[%d]: find link to %d changed, status=%d\n", *sa, nn, lk->lstatus);
@@ -243,10 +243,10 @@ void rp_lk_check(void *data)
 		{
 			/* second path */
 			path = &rt.item[j].psnd;
-			//è¯¥è·¯ç”±è·¯å¾„çš„ä¸‹ä¸€è·³æ˜¯æ­£åœ¨checkçš„é“¾è·¯é‚»æ¥ç‚¹
+			//¸ÃÂ·ÓÉÂ·¾¶µÄÏÂÒ»ÌøÊÇÕıÔÚcheckµÄÁ´Â·ÁÚ½Óµã
 			if ((IS_NULL !=path->status)&&(nn == path->node[0]))
 			{
-			    //å¦‚æœè·¯ç”±è·¯å¾„çŠ¶æ€ä¼˜äºé“¾è·¯çŠ¶æ€ï¼Œåˆ™ä»¥é“¾è·¯çŠ¶æ€æ›¿æ¢è·¯ç”±è·¯å¾„çŠ¶æ€
+			    //Èç¹ûÂ·ÓÉÂ·¾¶×´Ì¬ÓÅÓÚÁ´Â·×´Ì¬£¬ÔòÒÔÁ´Â·×´Ì¬Ìæ»»Â·ÓÉÂ·¾¶×´Ì¬
 				if (path->status > lk->lstatus)
 				{
 					path->status = lk->lstatus;
@@ -267,7 +267,7 @@ void rp_lk_check(void *data)
 				int sn;
 				if (IS_NULL != rt.item[j].psnd.status)
 				{
-				    //è·¯ç”±è·¯å¾„æ¯”è¾ƒè¿”å›é2è¯´æ˜æ¬¡çº§è·¯å¾„å¯ç”¨ï¼Œè‹¥snç½®0è¯´æ˜ä¸‹ä¸€è·³èŠ‚ç‚¹ä¸åŒ
+				    //Â·ÓÉÂ·¾¶±È½Ï·µ»Ø·Ç2ËµÃ÷´Î¼¶Â·¾¶¿ÉÓÃ£¬ÈôsnÖÃ0ËµÃ÷ÏÂÒ»Ìø½Úµã²»Í¬
 					if (2 != rpath_up(MR_IN2AD(j), &rt.item[j].psnd, path, &sn))
 						ASSERT(0 == sn);
 				}

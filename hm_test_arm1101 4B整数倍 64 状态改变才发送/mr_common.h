@@ -67,6 +67,7 @@
 #define _LM2NL_BEGIN                 /* for FPGA 2 arm test */
 
 /* netlayer constants  */
+#define MAX_NET_NUM        32			/* maximum number of network */
 #define MAX_NODE_CNT		32			/* maximum number of network nodes */
 #define MAX_HOPS			10			/* maximum hops */
 #define MADR_UNI_MIN		1

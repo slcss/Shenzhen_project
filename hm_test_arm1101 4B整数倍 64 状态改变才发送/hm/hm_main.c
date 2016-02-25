@@ -1278,7 +1278,7 @@ int hm_rmsg_proc(U16 len, void * data)
 	mmsg_t *rmsg = (mmsg_t *)data;
 	int i,rval = 0;
 
-	/* 在MAC帧头后加一字节用来表示有效数据长度 12.18 */
+	/* 在MAC帧头后加两字节用来表示有效数据长度 12.18 */
 	U8 temp[2048] = {0};  /* temp数组用来存储修改后的数据结构 */
 	U16 temp_len = 0;
 	U16 MACdata_len = 0;
@@ -1309,12 +1309,12 @@ int hm_rmsg_proc(U16 len, void * data)
 			break;
 
 		case MMSG_FT_DATA:    /* 路由表   0X06 */	
-			EPT(stderr, "hm_rmsg_proc: 22222\n");
+			EPT(stderr, "*****hm_rmsg_proc: 22222\n");
 			hm_rmsg_ft_proc(len-1-8-4, rmsg->data+8+4);
 			break;
 
 		case MMSG_RPM:    /* 路由协议数据  0x00 */
-			EPT(stderr, "hm_rmsg_proc: 33333\n");
+			//EPT(stderr, "hm_rmsg_proc: 33333\n");
 
 			/* 将网络层发来的MAC帧数据填充到temp数组中 1.21 */
 			memcpy(temp, rmsg->data, 8);
@@ -1329,7 +1329,7 @@ int hm_rmsg_proc(U16 len, void * data)
 				temp_len = 4-(len+1)%4+(len+1);			
 			else
 				temp_len = len+1;		
-			EPT(stderr, "hm_rmsg_proc: temp_len = %d\n", temp_len);
+			//EPT(stderr, "hm_rmsg_proc: temp_len = %d\n", temp_len);
 			
 			hm_rmsg_rp_proc(temp_len, temp);    
 			break;

@@ -22,8 +22,9 @@ int combine_send_pkt(nl_package_t * pkt)
 			EPT(stderr, "malloc error when deal sigle pkt\n");
 		memset(snd_buf, 0, sizeof(snd_buf));
 		snd_buf->mtype = get_data_type(pkt);
+		EPT(stderr, "***snd_buf->mtype = %ld\n", snd_buf->mtype);
 		snd_buf->node = get_src_addr(pkt);
-		memcpy(&snd_buf->data, pkt->data + sizeof(mmhd_t), get_data_length(pkt));
+		memcpy(snd_buf->data, pkt->data + sizeof(mmhd_t), get_data_length(pkt));
 		nl_send_to_others(snd_buf,get_data_length(pkt));
 		free(snd_buf);
 		snd_buf == NULL;
@@ -115,9 +116,13 @@ int nl_send_to_others(mmsg_t *snd_msg, U16 length)
 			printf("%s\n",snd_msg->data);
 			return 0;
 		default:
+			printf("default\n"); 
 			qid = -1;
 			break;
 	}
+	
+	EPT(stdout, "~~~mtype:%ld qid:%d\n", snd_msg->mtype, qid);
+	
 	while(msgsnd(qid, snd_msg, length + sizeof(MADR), 0) < 0)
 	{
 		if (errno == EINTR)
@@ -138,8 +143,10 @@ int nl_send_to_others(mmsg_t *snd_msg, U16 length)
 //把消息数据经过封装分解发送到himac层
 int nl_send_to_himac(mmsg_t *msg,int len)
 {
+//	EPT(stderr, "#hm_qid:%d\n",hm_qid);
 	while(lock_of_himac)									//保证同一时间只有该函数只被一个对象访问
 	{
+		EPT(stderr, "##while sleep~~~\n");
 		sleep(1);
 	}
 	lock_of_himac = 1;
@@ -169,6 +176,7 @@ int nl_send_to_himac(mmsg_t *msg,int len)
 	ptr = (char *)(msg->data);
 	while(left > 0)
 	{
+//		EPT(stderr, "##hm_qid:%d\n",hm_qid);
 		if (left > (MAX_PACKAGE_DATA_LENGTH -sizeof(mmhd_t)))
 		{
 			n = MAX_PACKAGE_DATA_LENGTH -sizeof(mmhd_t);
@@ -208,6 +216,8 @@ int nl_send_to_himac(mmsg_t *msg,int len)
 					break;
 				}
 		}
+		
+	//	EPT(stderr, "###hm_qid:%d\n",hm_qid);
 
 		/*nl_package_t * pkt_1 = (nl_package_t *)snd_buf->data;
 		combine_send_pkt(pkt_1);

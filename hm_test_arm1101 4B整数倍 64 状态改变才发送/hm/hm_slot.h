@@ -150,7 +150,7 @@ void *hm_bs_life_thread(void *);
 void hm_LowMAC_slot_proc(U8);
 void *hm_sf_ls_send_thread(void *);
 
-#ifdef _HM_TEST
+#if 1
 void *hm_pf_slot_thread(void *);
 #endif
 

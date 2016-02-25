@@ -34,7 +34,7 @@ typedef struct								//使用位域，能够减少出错
 #pragma pack()
 
 //init_package_head中的rcv_addr需要在外部查询路由表获得之后再作为参数传进来
-void init_package_head(nl_package_t* pkt,U8 mtype,MADR mdest);
+void init_package_head(nl_package_t* pkt,U16 mtype,MADR mdest);
 
 inline void set_data_len(nl_package_t* pkt,U16 len);
 inline U16 get_data_len(nl_package_t* pkt);
@@ -70,7 +70,7 @@ inline U8 get_CoS(nl_package_t *pkt);
 inline void set_CRC(nl_package_t *pkt, U8 CRC);
 inline U8 get_CRC(nl_package_t *pkt);
 
-inline void set_data_type(nl_package_t *pkt,U8 data_type);
+inline void set_data_type(nl_package_t *pkt,U16 data_type);
 inline U16 get_data_type(nl_package_t *pkt);
 inline void set_data_length(nl_package_t *pkt,U16 data_length);
 inline U16 get_data_length(nl_package_t *pkt);
