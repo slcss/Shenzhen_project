@@ -982,7 +982,6 @@ int main(int argc, char* argv[])
 	*(int *)tx_msg.data = mac_qid;
 	len += sizeof(int);
 	EPT(stderr, "main: mac_qid = %d\n", mac_qid);
-	EPT(stderr, "main: ht_qid = %d\n", ht_qid);
 	msgsnd(ht_qid, (void *)&tx_msg, len, 0);
 #endif
 
