@@ -142,6 +142,7 @@ void* hm_rcvfrom_nl_thread(void *arg)
 
 	rval = 0;
 	stop = 0;
+	pause();
 	while(0 == stop)
 	{
 		memset(&rx_msg, 0, sizeof(rx_msg));

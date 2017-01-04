@@ -28,7 +28,6 @@
 #include <sys/wait.h>
 #include <assert.h>
 #include <pthread.h>
-#include <math.h>
 
 /* conditional compiltion */
 #define _ERR_PRINT
@@ -61,7 +60,7 @@
 
 /** very important  */
 //#define _MR_TEST                        /* for routing protocol test */
-#define _HM_TEST                     /* for highMAC test */
+//#define _HM_TEST                     /* for highMAC test */
 //#define _NL_TEST  1                  /* for netlayer test */
 
 /* netlayer constants  */
@@ -174,7 +173,7 @@ typedef struct _tproc_t {
 typedef struct _tsche_t {
 	U32		tmap;			/* timer map for support multiple timer function */
 	U32		tmask;			/* timer mask for disabling certain timer function 1: enbale */
-	tproc_t	procs[32];		/* the maximum number of the functions is 32，这个32和时隙没有任何关系 */
+	tproc_t	procs[32];		/* the maximum number of the functions is 32 */
 //	tproc_t	procs[2];			/* for test */
 } tsche_t;
 

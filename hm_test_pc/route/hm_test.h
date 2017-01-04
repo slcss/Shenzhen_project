@@ -98,6 +98,42 @@ typedef struct _H2L_MAC_frame_t{
 }H2L_MAC_frame_t;
 
 
+/********************************************** 时隙预约请求帧REQ **********************************************/
+typedef struct _REQ_t{
+	U8	node;
+	U8	slot_select[MAX_DSLS_PCF+1];
+}REQ_t;
+
+
+/********************************************** 时隙预约响应帧REP **********************************************/
+typedef struct _REP_t{
+	U8	node_REQ;  //REP应答的发送REQ的节点
+	U8	node;
+	U8	slot_select[MAX_DSLS_PCF+1];
+	U8	select_flag;  //0为不允许占用，1为部分允许占用，2为全部允许占用
+}REP_t;
+
+
+/********************************************** 时隙预约确认帧ACK **********************************************/
+typedef struct _ACK_t{
+	U8	node;
+	U8	slot_select[MAX_DSLS_PCF+1];
+}ACK_t;
+
+
+/********************************************** 时隙释放通知帧ACK **********************************************/
+typedef struct _DROP_t{
+	U8	node;
+	U8	slot_select[MAX_DSLS_PCF+1];
+}DROP_t;
+
+/************** 差错控制帧结构 **************/
+typedef struct _lm_flow_ctrl_t{
+	U8   HSN:4;
+	U8	 HSN_flag:2;
+	U8   q_flag:2;
+}lm_flow_ctrl_t;
+
 
 int   ht_tinit(char*);
 int   ht_queues_init();
